@@ -1,4 +1,5 @@
 import 'package:expense_personal/view/screen/introduce_screen.dart';
+import 'package:expense_personal/view/screen/login_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: IntroduceScreen(),
+      home: LoginScreen(),
     );
   }
 }
