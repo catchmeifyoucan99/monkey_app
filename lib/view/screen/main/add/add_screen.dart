@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class AddScreen extends StatelessWidget {
+class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
+
+  @override
+  _AddScreenState createState() => _AddScreenState();
+}
+
+class _AddScreenState extends State<AddScreen> {
+  String? transactionType = 'Income';
+  DateTime selectedDate = DateTime.now();
+  TextEditingController titleController = TextEditingController();
+  TextEditingController amountController = TextEditingController();
+  String? selectedCategory = 'Salary';
+
+  List<String> incomeCategories = ['Salary', 'Business', 'Freelance'];
+  List<String> expenseCategories = ['Food', 'Transportation', 'Entertainment'];
 
   @override
   Widget build(BuildContext context) {
@@ -13,64 +28,146 @@ class AddScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Chọn loại giao dịch:',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Các nút bấm thêm thu nhập và chi tiêu
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildTransactionButton(
-                  context,
-                  'Thu Nhập',
-                  Icons.add_circle_outline,
-                  Colors.green,
-                      () {
-                    // Chuyển tới màn hình Thu Nhập
-                  },
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Chọn loại giao dịch:',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
-                _buildTransactionButton(
-                  context,
-                  'Chi Tiêu',
-                  Icons.remove_circle_outline,
-                  Colors.red,
-                      () {
-                    // Chuyển tới màn hình Chi Tiêu
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              'Giao Dịch Đã Thêm:',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
               ),
-            ),
-            const SizedBox(height: 10),
-            // Danh sách giao dịch đã thêm
-            _buildTransactionCard('Mua sắm', '2,000,000 VND', '20/01/2025', Icons.shopping_cart),
-            _buildTransactionCard('Ăn uống', '500,000 VND', '19/01/2025', Icons.restaurant),
-            _buildTransactionCard('Taxi', '100,000 VND', '18/01/2025', Icons.directions_car),
-          ],
+              const SizedBox(height: 20),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildTransactionButton(
+                    'Thu Nhập',
+                    Icons.add_circle_outline,
+                    Colors.green,
+                        () {
+                      setState(() {
+                        transactionType = 'Income';
+                      });
+                    },
+                  ),
+                  _buildTransactionButton(
+                    'Chi Tiêu',
+                    Icons.remove_circle_outline,
+                    Colors.red,
+                        () {
+                      setState(() {
+                        transactionType = 'Expense';
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+              const Text(
+                'Thông tin giao dịch:',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                controller: titleController,
+                label: 'Income Title',
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                controller: amountController,
+                label: 'Amount',
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: transactionType == 'Income' ? selectedCategory : 'Food',
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedCategory = newValue!;
+                  });
+                },
+                items: (transactionType == 'Income' ? incomeCategories : expenseCategories)
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.teal),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Ngày: ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.calendar_today, color: Colors.teal),
+                      onPressed: () async {
+                        DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2101),
+                        );
+                        if (pickedDate != null && pickedDate != selectedDate) {
+                          setState(() {
+                            selectedDate = pickedDate;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  String title = titleController.text;
+                  String amount = amountController.text;
+                  String category = selectedCategory ?? '';
+                  String date = DateFormat('dd/MM/yyyy').format(selectedDate);
+
+                  if (title.isNotEmpty && amount.isNotEmpty) {
+                    print('Giao dịch đã thêm: $title, $amount, $category, $date');
+                  }
+                },
+                child: const Text('Thêm Giao Dịch'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Hàm xây dựng button cho thu nhập và chi tiêu
-  Widget _buildTransactionButton(BuildContext context, String label, IconData icon, Color color, VoidCallback onPressed) {
+  Widget _buildTransactionButton(
+      String label, IconData icon, Color color, VoidCallback onPressed) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, color: Colors.white),
@@ -79,7 +176,7 @@ class AddScreen extends StatelessWidget {
         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.teal,
+        backgroundColor: color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -88,43 +185,19 @@ class AddScreen extends StatelessWidget {
     );
   }
 
-  // Hàm xây dựng card cho mỗi giao dịch
-  Widget _buildTransactionCard(String title, String amount, String date, IconData icon) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: Colors.blue),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        subtitle: Text(
-          date,
-          style: TextStyle(
-            color: Colors.grey[600],
-          ),
-        ),
-        trailing: Text(
-          amount,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
-          ),
-        ),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        filled: true,
+        fillColor: Colors.white,
       ),
     );
   }

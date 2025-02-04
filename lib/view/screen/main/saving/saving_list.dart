@@ -2,9 +2,9 @@ import 'package:expense_personal/model/saving.dart';
 import 'package:flutter/material.dart';
 
 class SavingList extends StatelessWidget {
-  final List<Saving> savings; // Nhận danh sách tiết kiệm từ SavingScreen
+  final List<Saving> savings;
 
-  const SavingList({super.key, required this.savings}); // Constructor nhận danh sách
+  const SavingList({super.key, required this.savings});
 
   void _showSavingDetails(BuildContext context, Saving saving) {
     showDialog(

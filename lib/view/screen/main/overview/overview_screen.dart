@@ -25,7 +25,6 @@ class OverviewScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tổng thu nhập, chi tiêu và số dư
             const Text(
               'Tổng quan tài chính',
               style: TextStyle(
@@ -38,7 +37,6 @@ class OverviewScreen extends StatelessWidget {
             _buildOverviewCards(context),
             const SizedBox(height: 40),
 
-            // Biểu đồ chi tiêu theo danh mục
             const Text(
               'Chi tiêu theo danh mục',
               style: TextStyle(
@@ -51,7 +49,6 @@ class OverviewScreen extends StatelessWidget {
             _buildExpenseChart(),
             const SizedBox(height: 40),
 
-            // Các giao dịch mới nhất
             const Text(
               'Giao dịch gần đây',
               style: TextStyle(
@@ -68,7 +65,6 @@ class OverviewScreen extends StatelessWidget {
     );
   }
 
-  // Xây dựng card hiển thị tổng quan thu nhập, chi tiêu và số dư
   Widget _buildOverviewCards(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -121,7 +117,6 @@ class OverviewScreen extends StatelessWidget {
     );
   }
 
-  // Xây dựng biểu đồ chi tiêu theo danh mục
   Widget _buildExpenseChart() {
     return SizedBox(
       height: 250,
@@ -180,7 +175,6 @@ class OverviewScreen extends StatelessWidget {
     );
   }
 
-  // Xây dựng danh sách các giao dịch gần đây
   Widget _buildRecentTransactions() {
     return Column(
       children: [
@@ -191,7 +185,6 @@ class OverviewScreen extends StatelessWidget {
     );
   }
 
-  // Xây dựng card cho mỗi giao dịch
   Widget _buildTransactionCard(String title, String amount, String date, IconData icon) {
     return Card(
       margin: const EdgeInsets.only(bottom: 15),
