@@ -1,10 +1,9 @@
 import 'package:expense_personal/view/screen/introduce_screen.dart';
-import 'package:expense_personal/view/screen/login_screen.dart';
+import 'package:expense_personal/view/screen/main/main_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -12,13 +11,32 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Quản Lý Chi Tiêu',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: LoginScreen(),
+      home: FutureBuilder(
+        future: _checkIfFirstTime(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+          if (snapshot.data == true) {
+            return IntroduceScreen();
+          } else {
+            return MainScreen();
+          }
+        },
+      ),
     );
   }
-}
 
+  Future<bool> _checkIfFirstTime() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isFirstTime = prefs.getBool('isFirstTime') ?? true;
+    if (isFirstTime) {
+      prefs.setBool('isFirstTime', false);
+    }
+    return isFirstTime;
+  }
+}

@@ -4,7 +4,7 @@ import 'register_screen.dart';
 import 'package:expense_personal/widget/input_decoration.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreen();

@@ -1,8 +1,9 @@
+import 'package:expense_personal/view/screen/main/overview/overview_screen.dart';
 import 'package:expense_personal/widget/custom_button.dart';
 import 'package:flutter/material.dart';
 
 class IntroduceScreen extends StatefulWidget {
-  const IntroduceScreen({Key? key}) : super(key: key);
+  const IntroduceScreen({super.key});
 
   @override
   State<IntroduceScreen> createState() => _IntroduceScreenState();
@@ -40,12 +41,11 @@ class _IntroduceScreenState extends State<IntroduceScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // _goToMainScreen();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => OverviewScreen()),
+      );
     }
-  }
-
-  void _goToMainScreen() {
-    Navigator.pushReplacementNamed(context, '/main');
   }
 
   @override
