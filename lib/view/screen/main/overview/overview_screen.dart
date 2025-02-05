@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
 
-class OverviewScreen extends StatelessWidget {
+class OverviewScreen extends StatefulWidget {
   const OverviewScreen({super.key});
+
+  @override
+  State<OverviewScreen> createState() => _OverviewScreenState();
+}
+
+class _OverviewScreenState extends State<OverviewScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +39,7 @@ class OverviewScreen extends StatelessWidget {
                 fontSize: 18,
               ),
             ),
-            CircleAvatar(
+            const CircleAvatar(
               radius: 20,
               backgroundImage: NetworkImage('https://example.com/avatar.jpg'),
             ),
@@ -30,38 +48,93 @@ class OverviewScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             _buildOverviewCards(context),
             const SizedBox(height: 40),
 
-            const Text(
-              'Chi tiêu theo danh mục',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+              ),
+              child: Column(
+                children: [
+                  TabBar(
+                    controller: _tabController,
+                    tabs: const [
+                      Tab(text: 'Saving'),
+                      Tab(text: 'Remind'),
+                      Tab(text: 'Budget'),
+                    ],
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.black,
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25.0),
+                      color: Colors.teal,
+                    ),
+                    indicatorColor: Colors.transparent,
+                    indicatorWeight: 0,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    isScrollable: false,
+                  ),
+                  SizedBox(height: 40),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 19),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Các mục nhập mới nhất",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Color(0xFFB0B8BF), width: 1),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: SizedBox(
+                            width: 25,
+                            height: 25,
+                            child: IconButton(
+                              icon: const Icon(Icons.more_horiz, size: 18),
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                // Xử lý khi bấm vào icon
+                              },
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  )
+                  ,
+                  SizedBox(
+                    height: 388,
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildTabContent(savingData, Colors.teal),
+                        _buildTabContent(remindData, Colors.orange),
+                        _buildTabContent(budgetData, Colors.purple),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            _buildExpenseChart(),
-            const SizedBox(height: 40),
-
-            const Text(
-              'Giao dịch gần đây',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildRecentTransactions(),
           ],
         ),
       ),
@@ -76,14 +149,38 @@ class OverviewScreen extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         children: [
-          _buildOverviewCard(context, 'Tổng Thu Nhập', '5000000', Colors.black, Icons.account_balance_wallet),
-          _buildOverviewCard(context, 'Tổng Chi Tiêu', '5000000', Colors.white, Icons.shopping_cart),
-          _buildOverviewCard(context, 'Số Dư', '5000000', Colors.black, Icons.account_balance),
+          _buildOverviewCard(context, 'Tổng Thu Nhập', '5000000', Colors.black,
+              Icons.account_balance_wallet),
+          _buildOverviewCard(context, 'Tổng Chi Tiêu', '5000000', Colors.white,
+              Icons.shopping_cart),
+          _buildOverviewCard(
+              context, 'Số Dư', '5000000', Colors.black, Icons.account_balance),
         ],
       ),
     );
   }
-  Widget _buildOverviewCard(BuildContext context, String title, String amount, Color textColor, IconData icon) {
+
+
+  List<Map<String, dynamic>> savingData = [
+    {"description": "Tiết kiệm tháng 7", "amount": 2000000, "type": "income", "date": DateTime(2024, 7, 10)},
+    {"description": "Tiết kiệm tháng 6", "amount": 1500000, "type": "income", "date": DateTime(2024, 6, 10)},
+    {"description": "Tiết kiệm tháng 6", "amount": 1500000, "type": "income", "date": DateTime(2024, 6, 10)},
+    {"description": "Tiết kiệm tháng 6", "amount": 1500000, "type": "income", "date": DateTime(2024, 6, 10)},
+    {"description": "Tiết kiệm tháng 6", "amount": 1500000, "type": "income", "date": DateTime(2024, 6, 10)},
+  ];
+
+  List<Map<String, dynamic>> remindData = [
+    {"description": "Hóa đơn điện", "amount": 500000, "type": "expense", "date": DateTime(2024, 7, 5)},
+    {"description": "Hóa đơn nước", "amount": 300000, "type": "expense", "date": DateTime(2024, 7, 6)},
+  ];
+
+  List<Map<String, dynamic>> budgetData = [
+    {"description": "Ngân sách ăn uống", "amount": 3000000, "type": "expense", "date": DateTime(2024, 7, 1)},
+    {"description": "Ngân sách du lịch", "amount": 5000000, "type": "expense", "date": DateTime(2024, 7, 2)},
+  ];
+
+  Widget _buildOverviewCard(BuildContext context, String title, String amount,
+      Color textColor, IconData icon) {
     Color backgroundColor;
     if (textColor == Colors.black) {
       backgroundColor = Colors.white;
@@ -91,7 +188,6 @@ class OverviewScreen extends StatelessWidget {
       backgroundColor = Colors.teal;
     }
 
-    // Dùng NumberFormat để định dạng số tiền với dấu phẩy
     String formattedAmount = NumberFormat("#,##0").format(int.parse(amount));
 
     TextPainter textPainter = TextPainter(
@@ -133,7 +229,6 @@ class OverviewScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Column cho icon và title
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -154,7 +249,6 @@ class OverviewScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            // Sử dụng Expanded để Text có thể tự điều chỉnh
             Row(
               children: [
                 Expanded(
@@ -165,7 +259,7 @@ class OverviewScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
-                    overflow: TextOverflow.ellipsis, // Nếu số tiền quá dài, sẽ ẩn bớt
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -175,114 +269,58 @@ class OverviewScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-
-
-  Widget _buildExpenseChart() {
-    return SizedBox(
-      height: 250,
-      child: PieChart(
-        PieChartData(
-          sections: [
-            PieChartSectionData(
-              value: 40,
-              color: Colors.green,
-              title: 'Thực Phẩm\n40%',
-              radius: 60,
-              titleStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            PieChartSectionData(
-              value: 30,
-              color: Colors.teal,
-              title: 'Giải Trí\n30%',
-              radius: 60,
-              titleStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            PieChartSectionData(
-              value: 20,
-              color: Colors.red,
-              title: 'Di Chuyển\n20%',
-              radius: 60,
-              titleStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            PieChartSectionData(
-              value: 10,
-              color: Colors.orange,
-              title: 'Khác\n10%',
-              radius: 60,
-              titleStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-          centerSpaceRadius: 50,
-          sectionsSpace: 2,
-        ),
+Widget _buildTabContent(List<Map<String, dynamic>> transactions, Color color) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    child: transactions.isEmpty
+        ? Center(
+      child: Text(
+        'Chưa có dữ liệu',
+        style: TextStyle(fontSize: 16, color: color),
       ),
-    );
-  }
-
-  Widget _buildRecentTransactions() {
-    return Column(
-      children: [
-        _buildTransactionCard('Mua sắm', '2,000,000 VND', '20/01/2025', Icons.shopping_cart),
-        _buildTransactionCard('Ăn uống', '500,000 VND', '19/01/2025', Icons.restaurant),
-        _buildTransactionCard('Taxi', '100,000 VND', '18/01/2025', Icons.directions_car),
-      ],
-    );
-  }
-
-  Widget _buildTransactionCard(String title, String amount, String date, IconData icon) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 15),
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
+    )
+        : ListView.builder(
+      itemCount: transactions.length,
+      itemBuilder: (context, index) {
+        var transaction = transactions[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: Colors.teal),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+          child: ListTile(
+            leading: Icon(
+              transaction['type'] == 'income'
+                  ? Icons.arrow_downward
+                  : Icons.arrow_upward,
+              color: transaction['type'] == 'income'
+                  ? Colors.green
+                  : Colors.red,
+            ),
+            title: Text(
+              transaction['description'],
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              DateFormat('dd/MM/yyyy').format(transaction['date']),
+              style: TextStyle(color: Colors.grey),
+            ),
+            trailing: Text(
+              "${NumberFormat("#,##0").format(transaction['amount'])} VND",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: transaction['type'] == 'income'
+                    ? Colors.green
+                    : Colors.red,
+              ),
+            ),
           ),
-        ),
-        subtitle: Text(
-          date,
-          style: TextStyle(
-            color: Colors.grey[600],
-          ),
-        ),
-        trailing: Text(
-          amount,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
-          ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
 }
