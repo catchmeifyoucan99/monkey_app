@@ -1,9 +1,9 @@
-import 'package:expense_personal/view/screen/main/add/add_screen.dart';
-import 'package:expense_personal/view/screen/main/notification/notification_screen.dart';
-import 'package:expense_personal/view/screen/main/saving/saving_screen.dart';
-import 'package:expense_personal/view/screen/main/setting/setting_screen.dart';
+import 'package:expense_personal/view/screens/main/add/add_screen.dart';
+import 'package:expense_personal/view/screens/main/notification/notification_screen.dart';
+import 'package:expense_personal/view/screens/main/saving/saving_screen.dart';
+import 'package:expense_personal/view/screens/main/setting/setting_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:expense_personal/view/screen/main/overview/overview_screen.dart';
+import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

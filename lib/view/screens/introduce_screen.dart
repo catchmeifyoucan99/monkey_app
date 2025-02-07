@@ -1,5 +1,5 @@
-import 'package:expense_personal/view/screen/main/overview/overview_screen.dart';
-import 'package:expense_personal/widget/custom_button.dart';
+import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
+import 'package:expense_personal/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 
 class IntroduceScreen extends StatefulWidget {

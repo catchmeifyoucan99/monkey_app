@@ -1,5 +1,5 @@
-import 'package:expense_personal/view/screen/introduce_screen.dart';
-import 'package:expense_personal/view/screen/main/main_screen.dart';
+import 'package:expense_personal/view/screens/introduce_screen.dart';
+import 'package:expense_personal/view/screens/main/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

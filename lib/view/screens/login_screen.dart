@@ -1,38 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:expense_personal/widget/input_decoration.dart';
-import 'package:expense_personal/widget/custom_button.dart';
+import 'package:expense_personal/widgets/custom_button.dart';
+import 'register_screen.dart';
+import 'package:expense_personal/widgets/input_decoration.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreen();
+  State<LoginScreen> createState() => _LoginScreen();
 }
 
-class _RegisterScreen extends State<RegisterScreen> {
-  final TextEditingController nameController = TextEditingController();
+class _LoginScreen extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
   bool isPasswordVisible = false;
 
-  void register() {
-    String name = nameController.text.trim();
+  void login() {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
-    String confirmPassword = confirmPasswordController.text.trim();
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')),
       );
-    } else if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mật khẩu không khớp')),
-      );
     } else {
-      print('Tên: $name, Email: $email, Password: $password');
-      // Thực hiện đăng ký tại đây
+      print('Email: $email, Password: $password');
+      // Thực hiện đăng nhập tại đây
     }
   }
 
@@ -67,13 +60,7 @@ class _RegisterScreen extends State<RegisterScreen> {
             ),
             const SizedBox(height: 40),
 
-            TextField(
-              controller: nameController,
-              decoration: customInputDecoration('Tên', Icons.person),
-              keyboardType: TextInputType.name,
-            ),
-            const SizedBox(height: 20),
-
+            // Email field
             TextField(
               controller: emailController,
               decoration: customInputDecoration('Email', Icons.email),
@@ -81,30 +68,33 @@ class _RegisterScreen extends State<RegisterScreen> {
             ),
             const SizedBox(height: 20),
 
+            // Password field
             TextField(
               controller: passwordController,
               decoration: customInputDecoration(
                 'Mật khẩu',
                 Icons.lock,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFF242D35),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isPasswordVisible = !isPasswordVisible;
+                    });
+                  },
+                ),
               ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: confirmPasswordController,
-              decoration: customInputDecoration(
-                'Xác nhận mật khẩu',
-                Icons.lock,
-              ),
-              obscureText: true,
+              obscureText: !isPasswordVisible,
             ),
             const SizedBox(height: 30),
 
+            // Login button
             CustomButton(
-              label: 'Đăng ký',
+              label: 'Đăng nhập',
               backgroundColor: const Color(0xFF0E33F3),
-              onPressed: register,
+              onPressed: login,
               borderRadius: 12.0,
               color: Colors.white,
               fontSize: 18,
@@ -114,11 +104,23 @@ class _RegisterScreen extends State<RegisterScreen> {
 
             const SizedBox(height: 20),
 
+            // Forgot Password
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                print("Quên mật khẩu");
               },
-              child: const Text("Đã có tài khoản? Đăng nhập"),
+              child: const Text("Quên mật khẩu"),
+            ),
+
+            // Register navigation
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                );
+              },
+              child: const Text("Chưa có tài khoản? Đăng ký"),
             ),
           ],
         ),
