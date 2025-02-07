@@ -1,6 +1,5 @@
 import 'package:expense_personal/untils/format_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class OverviewCardList extends StatelessWidget {
   const OverviewCardList({super.key});

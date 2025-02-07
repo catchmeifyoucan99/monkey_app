@@ -1,9 +1,19 @@
 import 'package:expense_personal/view/screens/introduce_screen.dart';
 import 'package:expense_personal/view/screens/main/main_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+    print('Firebase initialized successfully!');
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+  }
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
