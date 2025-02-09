@@ -1,9 +1,14 @@
+import 'dart:developer' as dev;
+
 import 'package:flutter/material.dart';
 import 'package:expense_personal/widgets/input_decoration.dart';
 import 'package:expense_personal/widgets/custom_button.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreen();
@@ -16,7 +21,14 @@ class _RegisterScreen extends State<RegisterScreen> {
   final TextEditingController confirmPasswordController = TextEditingController();
   bool isPasswordVisible = false;
 
-  void register() {
+  bool isValidEmail(String email) {
+    final RegExp regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return regex.hasMatch(email);
+  }
+
+  void register() async {
+    final authProvider = context.read<AuthProvider>();
+
     String name = nameController.text.trim();
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
@@ -26,14 +38,70 @@ class _RegisterScreen extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')),
       );
-    } else if (password != confirmPassword) {
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email không đúng định dạng')),
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu phải có ít nhất 6 ký tự')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Mật khẩu không khớp')),
       );
-    } else {
-      print('Tên: $name, Email: $email, Password: $password');
-      // Thực hiện đăng ký tại đây
+      return;
     }
+
+    if (name.length < 3 || name.length > 18) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tên phải từ 3 đến 18 ký tự')),
+      );
+      return;
+    }
+
+    if(!mounted) return;
+
+    try {
+      bool success = await authProvider.register(email, password, name);
+
+      if (success) {
+        dev.log("Đăng ký thành công!", name: "RegisterScreen");
+
+        if(!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đăng ký thành công!')),
+        );
+
+        Future.delayed(const Duration(seconds: 1), () {
+          if(mounted) return context.go('/login');
+        });
+
+      } else {
+
+        if(!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tài khoản đã được đăng kí!')),
+        );
+      }
+    } catch (e) {
+      dev.log("Đăng ký lỗi $e", name: "RegisterScreen");
+
+      if(!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi đăng ký: ${e.toString()}')),
+      );
+    }
+
   }
 
   @override
@@ -116,7 +184,7 @@ class _RegisterScreen extends State<RegisterScreen> {
 
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                if(mounted) return context.go('/login');
               },
               child: const Text("Đã có tài khoản? Đăng nhập"),
             ),

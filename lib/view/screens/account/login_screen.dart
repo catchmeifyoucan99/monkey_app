@@ -1,7 +1,11 @@
+import 'dart:developer' as dev;
+
 import 'package:flutter/material.dart';
 import 'package:expense_personal/widgets/custom_button.dart';
-import 'register_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:expense_personal/widgets/input_decoration.dart';
+import '../../../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,17 +19,48 @@ class _LoginScreen extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool isPasswordVisible = false;
 
-  void login() {
+  void login() async {
+    final authProvider = context.read<AuthProvider>();
+
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')),
       );
-    } else {
-      print('Email: $email, Password: $password');
-      // Thực hiện đăng nhập tại đây
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    if (!mounted) return;
+    try {
+      bool success = await authProvider.login(email, password);
+      if (success) {
+        String userName = authProvider.user?.name ?? "Người dùng";
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Xin chào $userName")),
+        );
+
+        if (!mounted) return;
+        context.go('/home');
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!')),
+        );
+      }
+    } catch (e) {
+      dev.log("Đăng nhập lỗi $e", name: "LoginScreen");
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: ${e.toString()}')),
+      );
     }
   }
 
@@ -107,7 +142,7 @@ class _LoginScreen extends State<LoginScreen> {
             // Forgot Password
             TextButton(
               onPressed: () {
-                print("Quên mật khẩu");
+                dev.log("Quên mật khẩu", name: "LoginScreen");
               },
               child: const Text("Quên mật khẩu"),
             ),
@@ -115,10 +150,7 @@ class _LoginScreen extends State<LoginScreen> {
             // Register navigation
             TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                );
+                if (mounted) context.go('/register');
               },
               child: const Text("Chưa có tài khoản? Đăng ký"),
             ),

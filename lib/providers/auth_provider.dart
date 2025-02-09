@@ -8,8 +8,8 @@ class AuthProvider with ChangeNotifier {
 
   UserModel? get user => _user;
 
-  Future<bool> register(String email, String password, String name) async {
-    _user = await _authService.register(email, password, name);
+  Future<bool> register(String email, String name, String password) async {
+    _user = await _authService.register(email, name, password);
     notifyListeners();
     return _user != null;
   }

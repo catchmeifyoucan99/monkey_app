@@ -1,4 +1,4 @@
-import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
+import 'package:expense_personal/view/screens/account/login_screen.dart';
 import 'package:expense_personal/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 
@@ -43,7 +43,7 @@ class _IntroduceScreenState extends State<IntroduceScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => OverviewScreen()),
+        MaterialPageRoute(builder: (context) => LoginScreen()),
       );
     }
   }

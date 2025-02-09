@@ -1,3 +1,5 @@
+import 'dart:developer' as dev;
+
 import 'package:expense_personal/model/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -6,6 +8,7 @@ class AuthService {
 
   Future<UserModel?> register (String email, String name, String password) async{
     try{
+      FirebaseAuth.instance.setLanguageCode("vi");
       UserCredential userCredential = await auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
@@ -22,22 +25,26 @@ class AuthService {
     return null;
   }
 
-  Future<UserModel?> login (String email, String password) async{
-    try{
+  Future<UserModel?> login(String email, String password) async {
+    try {
+      FirebaseAuth.instance.setLanguageCode("vi");
       UserCredential userCredential = await auth.signInWithEmailAndPassword(
-          email: email,
-          password: password
+        email: email,
+        password: password,
       );
 
       User? user = userCredential.user;
-      if(user != null){
-        return UserModel(uid: user.uid, email: email);
+      if (user != null && user.email != null) {
+        return UserModel(uid: user.uid, email: user.email!);
       }
-    } catch(e) {
-      print("Đăng nhập thất bại");
+    } on FirebaseAuthException catch (e) {
+      dev.log("Lỗi Firebase: ${e.code} - ${e.message}");
+    } catch (e) {
+      dev.log("Lỗi không xác định: $e");
     }
     return null;
   }
+
 
   Future<void> logout () async{
     await auth.signOut();
