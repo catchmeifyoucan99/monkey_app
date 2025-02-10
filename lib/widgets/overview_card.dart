@@ -13,11 +13,15 @@ class OverviewCardList extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         children: [
-          _buildOverviewCard(context, 'Tổng Thu Nhập', 5000000, Colors.black, Icons.account_balance_wallet, null),
+          _buildOverviewCard(context, 'Tổng Thu Nhập', 5000000, Colors.black, Icons.account_balance_wallet, () {
+            context.go('/totalSalary');
+          }),
           _buildOverviewCard(context, 'Tổng Chi Tiêu', 5000000, Colors.white, Icons.shopping_cart, () {
             context.go('/totalExpense');
           }),
-          _buildOverviewCard(context, 'Số Dư', 5000000, Colors.black, Icons.account_balance, null),
+          _buildOverviewCard(context, 'Hàng Tháng', 5000000, Colors.black, Icons.account_balance, () {
+            context.go('/totalMonthly');
+          }),
         ],
       ),
     );

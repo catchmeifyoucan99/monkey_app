@@ -5,6 +5,7 @@ import 'package:expense_personal/view/screens/account/login_screen.dart';
 import 'package:expense_personal/view/screens/main/main_screen.dart';
 import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
 import 'package:expense_personal/view/screens/main/overview/expense/total_expenses_screen.dart';
+import 'package:expense_personal/view/screens/main/overview/salary/total_salarys_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -85,7 +86,7 @@ class MyApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/totalSalary',
-          builder: (context, state) => const TotalExpensesScreen(),
+          builder: (context, state) => const TotalSalarysScreen(),
         ),
         GoRoute(
           path: '/totalExpense',
