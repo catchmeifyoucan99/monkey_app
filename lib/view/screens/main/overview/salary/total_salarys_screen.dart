@@ -1,8 +1,7 @@
 import 'package:expense_personal/widgets/circle_total_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../../untils/format_utils.dart';
+import '../../../../../utils/format_utils.dart';
 import '../../../../../widgets/week_calendar_widget.dart';
 
 class TotalSalarysScreen extends StatefulWidget {
