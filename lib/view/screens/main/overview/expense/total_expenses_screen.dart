@@ -1,7 +1,6 @@
 import 'package:expense_personal/widgets/circle_total_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../../utils/format_utils.dart';
 import '../../../../../widgets/week_calendar_widget.dart';
 
@@ -53,7 +52,7 @@ class _TotalExpensesScreenState extends State<TotalExpensesScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: GestureDetector(
-            onTap: () => context.go('/overView'),
+            onTap: () => context.go('/home'),
             child: Container(
               width: 10,
               height: 10,
@@ -111,6 +110,9 @@ class _TotalExpensesScreenState extends State<TotalExpensesScreen> {
               ),
             ],
           ),
+
+
+
 
 //////TapBar//////
           Expanded(

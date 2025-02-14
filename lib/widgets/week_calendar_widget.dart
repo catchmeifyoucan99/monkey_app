@@ -98,16 +98,24 @@ class _WeekCalendarWidgetState extends State<WeekCalendarWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: daysInWeek.map((date) {
-              final isSelected = widget.selectedDay != null &&
+              final bool isSelected = widget.selectedDay != null &&
                   widget.selectedDay!.year == date.year &&
                   widget.selectedDay!.month == date.month &&
                   widget.selectedDay!.day == date.day;
+
+              final bool isToday = widget.selectedDay == null &&
+                  date.year == DateTime.now().year &&
+                  date.month == DateTime.now().month &&
+                  date.day == DateTime.now().day;
 
               final bool isFutureDay = date.isAfter(DateTime.now());
               final String shortDay = DateFormat('EEE').format(date).substring(0, 2);
 
               return GestureDetector(
-                onTap: () => widget.onDaySelected(date),
+                onTap: () {
+                  final normalizedDate = DateTime(date.year, date.month, date.day);
+                  widget.onDaySelected(normalizedDate);
+                },
                 child: Column(
                   children: [
                     Text(
@@ -120,14 +128,14 @@ class _WeekCalendarWidgetState extends State<WeekCalendarWidget> {
                     const SizedBox(height: 4),
                     Container(
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.teal : Colors.transparent,
+                        color: isSelected || isToday ? Colors.teal : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.all(8),
                       child: Text(
                         '${date.day}',
                         style: TextStyle(
-                          color: isSelected
+                          color: isSelected || isToday
                               ? Colors.white
                               : (isFutureDay ? const Color(0xFFB0B8BF) : Colors.black),
                           fontWeight: FontWeight.bold,
@@ -139,7 +147,7 @@ class _WeekCalendarWidgetState extends State<WeekCalendarWidget> {
               );
             }).toList(),
           ),
-        ],
+      ],
       ),
     );
   }

@@ -16,14 +16,30 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen> {
   DateTime? _selectedDay;
 
   final Map<DateTime, List<String>> _events = {
-    DateTime(2024, 2, 3): ['Lương chính: 10 triệu'],
-    DateTime(2024, 2, 5): ['Thưởng: 2 triệu'],
-    DateTime(2024, 2, 10): ['Lương phụ: 5 triệu'],
+    DateTime(2025, 2, 3): ['Lương chính: 10 triệu', 'Thưởng KPI: 1 triệu'],
+    DateTime(2025, 2, 5): ['Thưởng: 2 triệu'],
+    DateTime(2025, 2, 10): ['Lương phụ: 5 triệu', 'Hoa hồng: 500k'],
+    DateTime(2025, 2, 11): ['Tiền thưởng: 1 triệu'],
+    DateTime(2025, 2, 15): ['Tiền phụ cấp: 3 triệu'],
   };
 
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedDay = DateTime(now.year, now.month, now.day);
+    _focusedWeek = _getStartOfWeek(now);
+  }
+
+  DateTime _getStartOfWeek(DateTime date) {
+    return date.subtract(Duration(days: date.weekday - 1));
+  }
 
   List<String> _getEventsForDay(DateTime day) {
-    return _events[DateTime(day.year, day.month, day.day)] ?? [];
+    final normalizedDate = DateTime(day.year, day.month, day.day);
+    final events = _events[normalizedDate] ?? [];
+    print("Sự kiện của ngày $normalizedDate: $events");
+    return events;
   }
 
   List<DateTime> _getDaysInWeek(DateTime week) {
@@ -52,7 +68,7 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: GestureDetector(
-            onTap: () => context.go('/overView'),
+            onTap: () => context.go('/home'),
             child: Container(
               width: 10,
               height: 10,
@@ -80,10 +96,12 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen> {
                 _focusedWeek = newWeek;
               });
             },
-            onDaySelected: (selectedDate) {
+            onDaySelected: (date) {
+              final normalizedDate = DateTime(date.year, date.month, date.day);
               setState(() {
-                _selectedDay = selectedDate;
+                _selectedDay = normalizedDate;
               });
+              print("Ngày được chọn: $_selectedDay");
             },
           ),
           const SizedBox(height: 45),
@@ -119,13 +137,20 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen> {
               itemCount: _getEventsForDay(_selectedDay!).length,
               itemBuilder: (context, index) {
                 final event = _getEventsForDay(_selectedDay!)[index];
-                return ListTile(
-                  leading: const Icon(Icons.monetization_on, color: Colors.teal),
-                  title: Text(event),
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 2,
+                  child: ListTile(
+                    leading: const Icon(Icons.monetization_on, color: Colors.teal),
+                    title: Text(event, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  ),
                 );
               },
             ),
           ),
+
+
+
         ],
       ),
     );
