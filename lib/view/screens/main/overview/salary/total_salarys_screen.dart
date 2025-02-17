@@ -1,7 +1,7 @@
 import 'package:expense_personal/widgets/circle_total_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../utils/format_utils.dart';
+import '../../../../../widgets/total_tab.dart';
 import '../../../../../widgets/week_calendar_widget.dart';
 
 class TotalSalarysScreen extends StatefulWidget {
@@ -11,8 +11,8 @@ class TotalSalarysScreen extends StatefulWidget {
   _TotalSalarysScreenState createState() => _TotalSalarysScreenState();
 }
 
-class _TotalSalarysScreenState extends State<TotalSalarysScreen> {
-  DateTime _focusedWeek = DateTime.now();
+class _TotalSalarysScreenState extends State<TotalSalarysScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   DateTime? _selectedDay;
 
   final Map<DateTime, List<String>> _events = {
@@ -23,35 +23,44 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen> {
     DateTime(2025, 2, 15): ['Tiền phụ cấp: 3 triệu'],
   };
 
+  List<Map<String, dynamic>> _processEvents(List<String> events, DateTime date) {
+    return events.map((event) {
+      final parts = event.split(': ');
+      if (parts.length != 2) return null;
+
+      final amountString = parts[1].replaceAll(RegExp(r'[^0-9]'), '');
+      final amount = int.tryParse(amountString) ?? 0 * 1000;
+
+      return {
+        'description': parts[0],
+        'amount': amount,
+        'type': 'income',
+        'date': date,
+      };
+    }).where((item) => item != null).cast<Map<String, dynamic>>().toList();
+  }
+
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _selectedDay = DateTime(now.year, now.month, now.day);
-    _focusedWeek = _getStartOfWeek(now);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
-  DateTime _getStartOfWeek(DateTime date) {
-    return date.subtract(Duration(days: date.weekday - 1));
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   List<String> _getEventsForDay(DateTime day) {
     final normalizedDate = DateTime(day.year, day.month, day.day);
-    final events = _events[normalizedDate] ?? [];
-    print("Sự kiện của ngày $normalizedDate: $events");
-    return events;
-  }
-
-  List<DateTime> _getDaysInWeek(DateTime week) {
-    final startOfWeek = week.subtract(Duration(days: week.weekday - 1));
-    return List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
+    return _events[normalizedDate] ?? [];
   }
 
   @override
   Widget build(BuildContext context) {
-    final daysInWeek = _getDaysInWeek(_focusedWeek);
-    final String totalExpense = formatCurrency(5000000, includeCurrency: false);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -76,81 +85,78 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: Color(0xFFB0B8BF), width: 1),
               ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Colors.black,
+              child: const Icon(Icons.arrow_back_ios_new,
+                  color: Colors.black,
                   size: 18
               ),
             ),
           ),
         ),
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 35),
-
-//////Calender//////
-          WeekCalendarWidget(
-            initialDate: DateTime.now(),
-            selectedDay: _selectedDay,
-            onWeekChanged: (newWeek) {
-              setState(() {
-                _focusedWeek = newWeek;
-              });
-            },
-            onDaySelected: (date) {
-              final normalizedDate = DateTime(date.year, date.month, date.day);
-              setState(() {
-                _selectedDay = normalizedDate;
-              });
-              print("Ngày được chọn: $_selectedDay");
-            },
-          ),
-          const SizedBox(height: 45),
-
-//////Total Circle//////
-          TotalCircle(total: '1,000,000'),
-          const SizedBox(height: 16),
-
-//////Comment//////
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 150,
-                child: Text(
-                  "You have spent total 60% of your budget",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF242D35),
-                  ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 35),
+            WeekCalendarWidget(
+              initialDate: DateTime.now(),
+              selectedDay: _selectedDay,
+              onWeekChanged: (newWeek) {
+                setState(() {
+                });
+              },
+              onDaySelected: (date) {
+                final normalizedDate = DateTime(date.year, date.month, date.day);
+                setState(() {
+                  _selectedDay = normalizedDate;
+                });
+              },
+            ),
+            const SizedBox(height: 40),
+            TotalCircle(total: '1,000,000'),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                "You have spent total 60% of your budget",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF242D35),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 25),
+            _buildTabSection(),
+          ],
+        ),
+      ),
+      backgroundColor: const Color(0xFFeaedf0),
+    );
+  }
 
-//////TapBar//////
+  Widget _buildTabSection() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      child: Column(
+        children: [
           Expanded(
             child: _selectedDay == null
                 ? const Center(child: Text('Chọn ngày để xem chi tiết thu nhập.'))
-                : ListView.builder(
-              itemCount: _getEventsForDay(_selectedDay!).length,
-              itemBuilder: (context, index) {
-                final event = _getEventsForDay(_selectedDay!)[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  elevation: 2,
-                  child: ListTile(
-                    leading: const Icon(Icons.monetization_on, color: Colors.teal),
-                    title: Text(event, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                  ),
-                );
-              },
+                : TotalTab(
+              tabController: _tabController,
+              spendsData: _processEvents(
+                _getEventsForDay(_selectedDay!),
+                _selectedDay!,
+              ),
+              categoriesData: [],
             ),
           ),
-
-
-
         ],
       ),
     );

@@ -1,5 +1,8 @@
 import 'package:expense_personal/providers/auth_provider.dart';
 import 'package:expense_personal/view/screens/account/register_screen.dart';
+import 'package:expense_personal/view/screens/main/add/add_expense.dart';
+import 'package:expense_personal/view/screens/main/add/add_salary.dart';
+import 'package:expense_personal/view/screens/main/add/add_screen.dart';
 import 'package:expense_personal/view/screens/main/introduce_screen.dart';
 import 'package:expense_personal/view/screens/account/login_screen.dart';
 import 'package:expense_personal/view/screens/main/main_screen.dart';
@@ -91,6 +94,18 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/totalExpense',
           builder: (context, state) => const TotalExpensesScreen(),
+        ),
+        GoRoute(
+          path: '/addScreen',
+          builder: (context, state) => const AddScreen(),
+        ),
+        GoRoute(
+          path: '/addSalary',
+          builder: (context, state) => const AddSalaryScreen(),
+        ),
+        GoRoute(
+          path: '/addExpense',
+          builder: (context, state) => const AddExpenseScreen(),
         ),
 
       ],
