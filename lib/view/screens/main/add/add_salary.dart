@@ -25,7 +25,7 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Thêm Giao Dịch',
+          'Thêm Thu Nhập',
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -160,7 +160,6 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                     const SizedBox(height: 8),
 
                     AnimatedAddButton(),
-
 
                     const SizedBox(height: 24),
                     SizedBox(

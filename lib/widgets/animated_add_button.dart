@@ -11,8 +11,16 @@ class AnimatedAddButton extends StatefulWidget {
 class _AnimatedAddButtonState extends State<AnimatedAddButton> {
   bool _isExpanded = false;
   final TextEditingController _textController = TextEditingController();
-  final List<String> _categories = []; // Danh sách các category đã thêm
-  String? _selectedCategory; // Category đang được chọn
+  final List<String> _categories = [];
+  String? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController.addListener(() {
+      setState(() {}); // Cập nhật giao diện khi nhập liệu
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +38,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
             ),
             child: Row(
               children: [
-                Expanded(
+                Flexible(
                   child: TextField(
                     controller: _textController,
                     maxLength: 12,
@@ -39,7 +47,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
                       height: 1.5,
                     ),
                     decoration: InputDecoration(
-                      counterText: '', // Ẩn counter
+                      counterText: '',
                       hintText: 'Nhập tên giao dịch...',
                       hintStyle: TextStyle(
                         color: Colors.grey.withOpacity(0.7),
@@ -63,19 +71,30 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
                         vertical: 18,
                         horizontal: 16,
                       ),
+                      suffixIcon: _textController.text.isNotEmpty
+                          ? IconButton(
+                        icon: const Icon(Icons.check, color: Colors.teal),
+                        onPressed: () {
+                          if (_textController.text.isNotEmpty) {
+                            setState(() {
+                              _categories.add(_textController.text);
+                              _isExpanded = false;
+                              _textController.clear();
+                            });
+                          }
+                        },
+                      )
+                          : null,
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.check, color: Colors.teal),
+                  icon: const Icon(Icons.close, color: Colors.red),
                   onPressed: () {
-                    if (_textController.text.isNotEmpty) {
-                      setState(() {
-                        _categories.add(_textController.text);
-                        _isExpanded = false;
-                        _textController.clear();
-                      });
-                    }
+                    setState(() {
+                      _isExpanded = false;
+                      _textController.clear();
+                    });
                   },
                 ),
               ],
@@ -106,7 +125,6 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
           ),
         ),
         const SizedBox(height: 10),
-        // Hiển thị các category dạng Wrap
         Wrap(
           spacing: 8,
           runSpacing: 8,
