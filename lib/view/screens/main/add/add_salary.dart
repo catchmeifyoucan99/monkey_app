@@ -38,10 +38,10 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: GestureDetector(
-            onTap: () => context.go('/addScreen'),
+            onTap: () => context.pop('/addScreen'),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 10,
+              height: 10,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFFB0B8BF)),
