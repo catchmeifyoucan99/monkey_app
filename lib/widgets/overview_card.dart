@@ -40,7 +40,7 @@ class OverviewCardList extends StatelessWidget {
         decoration: BoxDecoration(
           color: textColor == Colors.black ? Colors.white : Colors.teal,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.5), blurRadius: 3, offset: const Offset(0, 3))],
+          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 1)],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),

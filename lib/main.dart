@@ -46,6 +46,7 @@ class MyApp extends StatelessWidget {
           );
         }
         return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
           title: 'Monkey',
           theme: ThemeData(primarySwatch: Colors.blue),
           routerConfig: _router(snapshot.data ?? true),
