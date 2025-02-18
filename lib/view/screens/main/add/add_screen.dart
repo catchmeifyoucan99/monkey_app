@@ -1,6 +1,13 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+
+
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -10,6 +17,70 @@ class AddScreen extends StatefulWidget {
 }
 
 class _AddScreenState extends State<AddScreen> {
+
+  Future<void> sendDataToN8N(Map<String, dynamic> data) async {
+    final url = Uri.parse("http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 200) {
+        print("Data sent successfully: ${response.body}");
+      } else {
+        print("Error: ${response.statusCode}, ${response.body}");
+      }
+    } catch (e) {
+      print("Exception: $e");
+    }
+  }
+
+  File _image= File("");
+  final picker = ImagePicker();
+  Future getImageFromGallery() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+      }
+    });
+  }
+  Future getImageFromCamera() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+        // sendDataToN8N({"image": _image});
+        askOllama(_image);
+      }
+    });
+  }
+
+  Future<void> askOllama(File _image) async {
+    final url = Uri.parse("http://localhost:11434/api/generate");
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "model": "llama3.2-vision:11b",  // Use "llama3", "gemma", etc.
+        "prompt": "Can you read the image and tell me how much i spent?"
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("Ollama Response: ${data['response']}");
+    } else {
+      print("Error: ${response.statusCode}");
+    }
+  }
+
   final List<Map<String, dynamic>> transactions = [
     {
       'icon': Icons.shopping_cart,
@@ -185,6 +256,7 @@ class _AddScreenState extends State<AddScreen> {
         child: InkWell(
           onTap: () {
             print('Thêm mới giao dịch');
+            getImageFromCamera();
           },
           child: Container(
             height: 100,

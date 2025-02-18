@@ -102,7 +102,9 @@ class _IntroduceScreenState extends State<IntroduceScreen> {
                       const SizedBox(height: 40),
                       CustomButton(
                         backgroundColor: Color(0xFF0E33F3),
-                        label: _currentIndex == pages.length - 1 ? "Continue" : "Next",
+                        label: _currentIndex == pages.length - 1
+                            ? "Continue"
+                            : "Next",
                         onPressed: _nextPage,
                         borderRadius: 14.0,
                         color: Colors.white,
@@ -120,6 +122,4 @@ class _IntroduceScreenState extends State<IntroduceScreen> {
       ),
     );
   }
-
 }
-
