@@ -1,10 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 
 import 'trash_bin.dart';
 
 class AnimatedAddButton extends StatefulWidget {
-  const AnimatedAddButton({super.key});
+  final ValueChanged<String?> onCategorySelected;
+  final String type; // Thêm tham số để xác định loại danh mục
+
+  const AnimatedAddButton({
+    super.key,
+    required this.onCategorySelected,
+    required this.type, // Yêu cầu loại danh mục khi khởi tạo
+  });
 
   @override
   State<AnimatedAddButton> createState() => _AnimatedAddButtonState();
@@ -23,6 +31,36 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
     _textController.addListener(() {
       setState(() {});
     });
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('${widget.type}_categories')
+          .get();
+      setState(() {
+        _categories.addAll(snapshot.docs.map((doc) => doc['name'] as String));
+      });
+    } catch (e) {
+      print('Lỗi khi tải danh mục: $e');
+    }
+  }
+
+  Future<void> _addCategory(String name) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('${widget.type}_categories')
+          .add({
+        'name': name,
+        'type': widget.type, // Lưu loại danh mục
+      });
+      setState(() {
+        _categories.add(name);
+      });
+    } catch (e) {
+      print('Lỗi khi thêm danh mục: $e');
+    }
   }
 
   @override
@@ -69,8 +107,8 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide:
-                            const BorderSide(color: Colors.teal, width: 2),
+                            borderSide: const BorderSide(
+                                color: Colors.teal, width: 2),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 18,
@@ -78,11 +116,13 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
                           ),
                           suffixIcon: _textController.text.isNotEmpty
                               ? IconButton(
-                            icon: const Icon(Icons.check, color: Colors.teal),
-                            onPressed: () {
+                            icon: const Icon(Icons.check,
+                                color: Colors.teal),
+                            onPressed: () async {
                               if (_textController.text.isNotEmpty) {
+                                await _addCategory(
+                                    _textController.text);
                                 setState(() {
-                                  _categories.add(_textController.text);
                                   _isExpanded = false;
                                   _textController.clear();
                                 });
@@ -204,6 +244,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
         onTap: () {
           setState(() {
             _selectedCategory = isSelected ? null : text;
+            widget.onCategorySelected(_selectedCategory);
           });
         },
         child: Container(
