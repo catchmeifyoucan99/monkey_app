@@ -77,7 +77,7 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen> with SingleTick
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: GestureDetector(
-            onTap: () => context.go('/home'),
+            onTap: () => context.pop('/home'),
             child: Container(
               width: 10,
               height: 10,

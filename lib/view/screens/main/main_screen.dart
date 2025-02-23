@@ -4,6 +4,7 @@ import 'package:expense_personal/view/screens/main/saving/saving_screen.dart';
 import 'package:expense_personal/view/screens/main/setting/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -28,10 +29,7 @@ class _MainScreenState extends State<MainScreen> {
       body: _screens[_currentIndex],
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddScreen()),
-          );
+          context.push('/addScreen');
         },
         backgroundColor: Colors.teal,
         elevation: 5,

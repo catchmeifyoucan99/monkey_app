@@ -16,13 +16,13 @@ class OverviewCardList extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         children: [
           _buildOverviewCard(context, 'Tổng Thu Nhập', 5000000, Colors.black, Icons.account_balance_wallet, () {
-            context.go('/totalSalary');
+            context.push('/totalSalary');
           }),
           _buildOverviewCard(context, 'Tổng Chi Tiêu', 5000000, Colors.white, Icons.shopping_cart, () {
-            context.go('/totalExpense');
+            context.push('/totalExpense');
           }),
           _buildOverviewCard(context, 'Hàng Tháng', 5000000, Colors.black, Icons.account_balance, () {
-            context.go('/totalMonthly');
+            context.push('/totalMonthly');
           }),
         ],
       ),
@@ -40,7 +40,7 @@ class OverviewCardList extends StatelessWidget {
         decoration: BoxDecoration(
           color: textColor == Colors.black ? Colors.white : Colors.teal,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.5), blurRadius: 3, offset: const Offset(0, 3))],
+          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 1)],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),

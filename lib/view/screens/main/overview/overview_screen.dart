@@ -1,6 +1,5 @@
 import 'package:expense_personal/widgets/overview_card.dart';
 import 'package:expense_personal/widgets/overview_tab.dart';
-import 'package:expense_personal/widgets/total_tab.dart';
 import 'package:flutter/material.dart';
 
 class OverviewScreen extends StatefulWidget {

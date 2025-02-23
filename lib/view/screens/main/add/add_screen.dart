@@ -220,18 +220,17 @@ class _AddScreenState extends State<AddScreen> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: GestureDetector(
-            onTap: () => context.go('/home'),
+            onTap: () => context.pop('/home'),
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Color(0xFFB0B8BF)),
+                border: Border.all(color: Color(0xFFB0B8BF), width: 1),
               ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.black,
-                size: 18,
+              child: const Icon(Icons.arrow_back_ios_new,
+                  color: Colors.black,
+                  size: 18
               ),
             ),
           ),
@@ -253,7 +252,7 @@ class _AddScreenState extends State<AddScreen> {
                   backgroundColor: Colors.white,
                   textColor: Colors.black,
                   borderColor: Colors.grey,
-                  onTap: () => context.go('/addSalary'),
+                  onTap: () => context.push('/addSalary'),
                 ),
 
                 _buildTransactionButton(
