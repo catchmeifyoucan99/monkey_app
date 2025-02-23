@@ -18,6 +18,11 @@ class AddScreen extends StatefulWidget {
 
 class _AddScreenState extends State<AddScreen> {
 
+  Future<String> encodeImage(File imageFile) async {
+    List<int> imageBytes = await imageFile.readAsBytes();
+    return base64Encode(imageBytes);
+  }
+
   Future<void> sendDataToN8N(Map<String, dynamic> data) async {
     final url = Uri.parse("http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
 
@@ -56,9 +61,45 @@ class _AddScreenState extends State<AddScreen> {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
         // sendDataToN8N({"image": _image});
-        askOllama(_image);
+        sendImageToHuggingFace(_image);
       }
     });
+  }
+
+
+  Future<void> sendImageToHuggingFace(File _image) async {
+    String apiUrl = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base";
+    String token = "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";  // Replace with your API key
+
+    // Pick an image from gallery
+    XFile? pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return; // User canceled
+
+    File imageFile = File(pickedFile.path);
+    List<int> imageBytes = await imageFile.readAsBytes();
+    String base64Image = base64Encode(imageBytes);
+
+    Map<String, dynamic> requestBody = {
+      "inputs": [
+        {"image": base64Image, "text": "Can you read the receipt image and tell me how much i spent?"}
+      ]
+    };
+
+    var response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode(requestBody),
+    );
+
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      print("Caption: ${jsonResponse[0]["generated_text"]}");
+    } else {
+      print("Error: ${response.body}");
+    }
   }
 
   Future<void> askOllama(File _image) async {
@@ -78,6 +119,62 @@ class _AddScreenState extends State<AddScreen> {
       print("Ollama Response: ${data['response']}");
     } else {
       print("Error: ${response.statusCode}");
+    }
+  }
+  Future<void> askOpenAI(File _image) async {
+    final url = Uri.parse("https://api.openai.com/v1/chat/completions");
+    final apiKey = "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"; // Replace with your OpenAI API Key
+
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $apiKey",
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode({
+        "model": "gpt-3.5-turbo",  // or "gpt-3.5-turbo"
+        "messages": [
+          {"role": "system", "content": "You are a helpful AI."},
+          {"role": "user", "content": "Greet me!"}
+        ]
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("OpenAI Response: ${data['choices'][0]['message']['content']}");
+    } else {
+      print("Error: ${response.statusCode} - ${response.body}");
+    }
+  }
+  Future<void> askGroq(File _image) async {
+    String base64Image = await encodeImage(_image);
+    final url = Uri.parse("https://api.groq.com/openai/v1/chat/completions");
+    final apiKey = "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"; // Replace with your Groq API Key
+
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $apiKey",
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode({
+        "model": "llama-3.2-90b-vision-preview",  // or "mixtral-8x7b"
+        "messages": [
+          {"role": "system", "content": "You are a helpful AI accountant."},
+          {"role": "user", "content": [
+            {"type": "text", "text": "Can you read the image and tell me how much i spent?"},
+            {"type": "image_url", "image_url": "data:image/png;base64,$base64Image"}
+          ]}
+        ]
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("Groq Response: ${data['choices'][0]['message']['content']}");
+    } else {
+      print("Error: ${response.statusCode} - ${response.body}");
     }
   }
 
