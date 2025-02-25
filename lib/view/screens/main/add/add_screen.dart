@@ -7,10 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
-
 import '../../../../utils/format_utils.dart';
-
-
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -80,7 +77,7 @@ class _AddScreenState extends State<AddScreen> {
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "model": "llama3.2-vision:11b",  // Use "llama3", "gemma", etc.
+        "model": "llama3.2-vision:11b",
         "prompt": "Can you read the image and tell me how much i spent?"
       }),
     );
@@ -98,7 +95,7 @@ class _AddScreenState extends State<AddScreen> {
       final QuerySnapshot snapshot = await _firestore
           .collection('transactions')
           .orderBy('date', descending: true)
-          .limit(10)
+          .limit(7)
           .get();
 
       print('Dữ liệu từ Firestore: ${snapshot.docs.length} giao dịch');
@@ -138,24 +135,6 @@ class _AddScreenState extends State<AddScreen> {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: GestureDetector(
-            onTap: () => context.pop('/home'),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Color(0xFFB0B8BF), width: 1),
-              ),
-              child: const Icon(Icons.arrow_back_ios_new,
-                  color: Colors.black,
-                  size: 18
-              ),
-            ),
-          ),
-        ),
       ),
       body: Column(
         children: [
@@ -227,31 +206,41 @@ class _AddScreenState extends State<AddScreen> {
                       itemBuilder: (context, index) {
                         final transaction = transactions[index];
                         return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: transaction['type'] == 'income'
-                                ? Colors.green.withOpacity(0.2)
-                                : Colors.red.withOpacity(0.2),
-                            child: Icon(
-                              transaction['type'] == 'income'
-                                  ? Icons.attach_money
-                                  : Icons.shopping_cart,
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
                               color: transaction['type'] == 'income'
-                                  ? Colors.green
-                                  : Colors.red,
+                                  ? Colors.teal.withOpacity(0.2)
+                                  : Colors.teal.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                transaction['type'] == 'income'
+                                    ? Icons.attach_money
+                                    : Icons.shopping_cart,
+                                color: transaction['type'] == 'income'
+                                    ? Colors.teal
+                                    : Colors.teal,
+                              ),
                             ),
                           ),
-                          title: Text(transaction['title']),
+                          title: Text(
+                            transaction['title'],
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           subtitle: Text(
-                            formatDate(DateTime.parse(transaction['date'])),
+                            formatDateV2(DateTime.parse(transaction['date'])),
                           ),
                           trailing: Text(
-                            formatCurrency(transaction['amount']),
+                            formatCurrencyV2(transaction['amount']),
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: transaction['type'] == 'income'
-                                  ? Colors.green
-                                  : Colors.red,
+                                  ? Colors.black
+                                  : Colors.black,
                             ),
                           ),
                         );
@@ -303,7 +292,7 @@ class _AddScreenState extends State<AddScreen> {
     required Color backgroundColor,
     required Color textColor,
     required Color borderColor,
-    required VoidCallback onTap, // Thêm callback để xử lý sự kiện nhấn
+    required VoidCallback onTap,
   }) {
     return SizedBox(
       width: 130,

@@ -15,13 +15,13 @@ class OverviewCardList extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         children: [
-          _buildOverviewCard(context, 'Tổng Thu Nhập', 5000000, Colors.black, Icons.account_balance_wallet, () {
+          _buildOverviewCard(context, 'Tổng Thu Nhập', '5000000', Colors.black, Icons.account_balance_wallet, () {
             context.push('/totalSalary');
           }),
-          _buildOverviewCard(context, 'Tổng Chi Tiêu', 5000000, Colors.white, Icons.shopping_cart, () {
+          _buildOverviewCard(context, 'Tổng Chi Tiêu', '5000000', Colors.white, Icons.shopping_cart, () {
             context.push('/totalExpense');
           }),
-          _buildOverviewCard(context, 'Hàng Tháng', 5000000, Colors.black, Icons.account_balance, () {
+          _buildOverviewCard(context, 'Hàng Tháng', '5000000', Colors.black, Icons.account_balance, () {
             context.push('/totalMonthly');
           }),
         ],
@@ -29,8 +29,8 @@ class OverviewCardList extends StatelessWidget {
     );
   }
 
-  Widget _buildOverviewCard(BuildContext context, String title, int amount, Color textColor, IconData icon, VoidCallback? onTap) {
-    String formatedAmount = formatCurrency(amount);
+  Widget _buildOverviewCard(BuildContext context, String title, String amount, Color textColor, IconData icon, VoidCallback? onTap) {
+    String formatedAmount = formatCurrencyV1(amount);
 
     return GestureDetector(
       onTap: onTap,

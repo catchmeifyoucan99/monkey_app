@@ -68,6 +68,9 @@ class MyApp extends StatelessWidget {
     return GoRouter(
       initialLocation: isFirstTime ? '/introduce' : '/login',
       routes: [
+        GoRoute(path: '/',
+          builder: (context, state) => const MainScreen(),
+        ),
         GoRoute(
           path: '/introduce',
           builder: (context, state) => const IntroduceScreen(),

@@ -21,6 +21,7 @@ class _MainScreenState extends State<MainScreen> {
     const SavingScreen(),
     const NotificationScreen(),
     const SettingScreen(),
+    const AddScreen(),
   ];
 
   @override
@@ -29,7 +30,9 @@ class _MainScreenState extends State<MainScreen> {
       body: _screens[_currentIndex],
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/addScreen');
+          setState(() {
+            _currentIndex = 4;
+          });
         },
         backgroundColor: Colors.teal,
         elevation: 5,
