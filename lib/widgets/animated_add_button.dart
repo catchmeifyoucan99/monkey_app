@@ -6,12 +6,12 @@ import 'trash_bin.dart';
 
 class AnimatedAddButton extends StatefulWidget {
   final ValueChanged<String?> onCategorySelected;
-  final String type; // Thêm tham số để xác định loại danh mục
+  final String type;
 
   const AnimatedAddButton({
     super.key,
     required this.onCategorySelected,
-    required this.type, // Yêu cầu loại danh mục khi khởi tạo
+    required this.type,
   });
 
   @override
@@ -53,13 +53,30 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
           .collection('${widget.type}_categories')
           .add({
         'name': name,
-        'type': widget.type, // Lưu loại danh mục
+        'type': widget.type,
       });
       setState(() {
         _categories.add(name);
       });
     } catch (e) {
       print('Lỗi khi thêm danh mục: $e');
+    }
+  }
+
+  Future<void> _deleteCategory(String categoryName, String type) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('${type}_categories')
+          .where('name', isEqualTo: categoryName)
+          .get();
+
+      for(final doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      print('Danh mục đã được xóa: $categoryName');
+    } catch (e) {
+      print('Lỗi khi xóa danh mục: $e');
     }
   }
 
@@ -186,12 +203,15 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
         ),
         if (_showTrash)
           TrashBin(
-            onAccept: (data) {
+            onAccept: (data) async {
+
+              await _deleteCategory(data, widget.type);
+              
               setState(() {
                 _categories.remove(data);
                 _showTrash = false;
               });
-            },
+            }, type: widget.type,
           ),
       ],
     );

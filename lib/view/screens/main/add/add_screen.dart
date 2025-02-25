@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -6,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+
+import '../../../../utils/format_utils.dart';
 
 
 
@@ -17,6 +20,15 @@ class AddScreen extends StatefulWidget {
 }
 
 class _AddScreenState extends State<AddScreen> {
+
+  List<Map<String, dynamic>> transactions = [];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+  }
 
   Future<void> sendDataToN8N(Map<String, dynamic> data) async {
     final url = Uri.parse("http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
@@ -81,29 +93,35 @@ class _AddScreenState extends State<AddScreen> {
     }
   }
 
-  final List<Map<String, dynamic>> transactions = [
-    {
-      'icon': Icons.shopping_cart,
-      'title': 'Mua sắm',
-      'amount': '-500.000đ',
-      'date': 'Hôm nay',
-      'color': Color(0xFFEBEEF0),
-    },
-    {
-      'icon': Icons.restaurant,
-      'title': 'Ăn uống',
-      'amount': '-200.000đ',
-      'date': 'Hôm qua',
-      'color': Color(0xFFEBEEF0),
-    },
-    {
-      'icon': Icons.attach_money,
-      'title': 'Lương',
-      'amount': '+10.000.000đ',
-      'date': '2 ngày trước',
-      'color': Color(0xFFEBEEF0),
-    },
-  ];
+  Future<void> _loadTransactions() async {
+    try {
+      final QuerySnapshot snapshot = await _firestore
+          .collection('transactions')
+          .orderBy('date', descending: true)
+          .limit(10)
+          .get();
+
+      print('Dữ liệu từ Firestore: ${snapshot.docs.length} giao dịch');
+      snapshot.docs.forEach((doc) {
+        print(doc.data());
+      });
+
+      setState(() {
+        transactions = snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return {
+            'title': data['title'],
+            'amount': data['amount'] >= 0 ? '+${data['amount']}đ' : '${data['amount']}đ',
+            'date': data['date'],
+            'type': data['type'],
+            'category': data['category'],
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print('Lỗi khi tải dữ liệu từ Firestore: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +182,7 @@ class _AddScreenState extends State<AddScreen> {
                   backgroundColor: Colors.teal,
                   textColor: Colors.white,
                   borderColor: Colors.teal,
-                  onTap: () => context.go('/addExpense'),
+                  onTap: () => context.push('/addExpense'),
                 ),
 
               ],
@@ -210,22 +228,30 @@ class _AddScreenState extends State<AddScreen> {
                         final transaction = transactions[index];
                         return ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: transaction['color'],
+                            backgroundColor: transaction['type'] == 'income'
+                                ? Colors.green.withOpacity(0.2)
+                                : Colors.red.withOpacity(0.2),
                             child: Icon(
-                              transaction['icon'],
-                              color: Colors.black,
+                              transaction['type'] == 'income'
+                                  ? Icons.attach_money
+                                  : Icons.shopping_cart,
+                              color: transaction['type'] == 'income'
+                                  ? Colors.green
+                                  : Colors.red,
                             ),
                           ),
                           title: Text(transaction['title']),
-                          subtitle: Text(transaction['date']),
+                          subtitle: Text(
+                            formatDate(DateTime.parse(transaction['date'])),
+                          ),
                           trailing: Text(
-                            transaction['amount'],
+                            formatCurrency(transaction['amount']),
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: transaction['amount'].startsWith('-')
-                                  ? Colors.black
-                                  : Colors.black,
+                              color: transaction['type'] == 'income'
+                                  ? Colors.green
+                                  : Colors.red,
                             ),
                           ),
                         );

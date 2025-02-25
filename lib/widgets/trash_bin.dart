@@ -2,16 +2,24 @@ import 'package:flutter/material.dart';
 
 class TrashBin extends StatelessWidget {
   final Function(String) onAccept;
+  final String type;
 
-  const TrashBin({super.key, required this.onAccept});
+  const TrashBin({
+    super.key,
+    required this.onAccept,
+    required this.type,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.topLeft,
       child: DragTarget<String>(
-        onWillAccept: (data) => true,
-        onAccept: onAccept,
+        onWillAcceptWithDetails: (data) => true,
+        onAcceptWithDetails: (details) {
+          final String data = details.data;
+          onAccept(data);
+        },
         builder: (context, candidateData, rejectedData) {
           return Container(
             width: 60,
