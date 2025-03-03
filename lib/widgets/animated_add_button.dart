@@ -187,7 +187,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
               ),
             ),
             const SizedBox(height: 15),
-            Container(
+            SizedBox(
               height: 170,
               child: SingleChildScrollView(
                 child: Wrap(

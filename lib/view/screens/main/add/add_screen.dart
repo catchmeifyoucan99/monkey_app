@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
+// import 'package:ocr_scan_text/ocr_scan_text.dart';
+// import 'package:ocr_scan_text_example/scan_all_module.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
@@ -20,19 +23,27 @@ class AddScreen extends StatefulWidget {
 }
 
 class _AddScreenState extends State<AddScreen> {
+  // Widget _buildLiveScan() {
+  //   return LiveScanWidget(
+  //     ocrTextResult: (ocrTextResult) {
+  //       ocrTextResult.mapResult.forEach((module, result) {});
+  //     },
+  //     scanModules: [ScanAllModule()],
+  //   );
+  // }
+
+  Future<String> encodeImage(File imageFile) async {
+    List<int> imageBytes = await imageFile.readAsBytes();
+    return base64Encode(imageBytes);
+  }
 
   List<Map<String, dynamic>> transactions = [];
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadTransactions();
-  }
-
   Future<void> sendDataToN8N(Map<String, dynamic> data) async {
-    final url = Uri.parse("http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
+    final url = Uri.parse(
+        "http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
 
     try {
       final response = await http.post(
@@ -51,7 +62,7 @@ class _AddScreenState extends State<AddScreen> {
     }
   }
 
-  File _image= File("");
+  File _image = File("");
   final picker = ImagePicker();
   Future getImageFromGallery() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -62,6 +73,7 @@ class _AddScreenState extends State<AddScreen> {
       }
     });
   }
+
   Future getImageFromCamera() async {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
@@ -69,13 +81,25 @@ class _AddScreenState extends State<AddScreen> {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
         // sendDataToN8N({"image": _image});
-        askOllama(_image);
+        // sendImageToHuggingFace(_image);
+        getImageTotext(_image.path);
       }
     });
   }
 
-  Future<void> askOllama(File _image) async {
+  Future getImageTotext(final imagePath) async {
+    final textRecognizer = TextRecognizer();
+    final RecognizedText recognizedText =
+        await textRecognizer.processImage(InputImage.fromFilePath(imagePath));
+    String text = recognizedText.text.toString();
+    print("Text: $text");
+    askGroq(text);
+    return text;
+  }
+  Future<void> askOllama(File image) async {
     final url = Uri.parse("http://localhost:11434/api/generate");
+    List<int> imageBytes = await image.readAsBytes();
+    String base64Image = base64Encode(imageBytes);
 
     final response = await http.post(
       url,
@@ -91,6 +115,44 @@ class _AddScreenState extends State<AddScreen> {
       print("Ollama Response: ${data['response']}");
     } else {
       print("Error: ${response.statusCode}");
+    }
+  }
+  Future<void> askGroq(final text) async {
+    // String base64Image = await encodeImage(image);
+    final url = Uri.parse("https://api.groq.com/openai/v1/chat/completions");
+    final apiKey =
+        "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"; // Replace with your Groq API Key
+
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $apiKey",
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode({
+        "model": "llama-3.2-90b-vision-preview", // or "mixtral-8x7b"
+        "messages": [
+          {"role": "system", "content": "You are a helpful AI accountant."},
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a text extract from the image: " +
+                    text +
+                    ". Tell me how much I spent in VND currency."
+              },
+            ]
+          }
+        ]
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("Groq Response: ${data['choices'][0]['message']['content']}");
+    } else {
+      print("Error: ${response.statusCode} - ${response.body}");
     }
   }
 
@@ -163,7 +225,6 @@ class _AddScreenState extends State<AddScreen> {
                   borderColor: Colors.grey,
                   onTap: () => context.push('/addSalary'),
                 ),
-
                 _buildTransactionButton(
                   icon: Icons.account_balance_wallet_outlined,
                   label: 'Thêm Chi Tiêu',
@@ -172,7 +233,6 @@ class _AddScreenState extends State<AddScreen> {
                   borderColor: Colors.teal,
                   onTap: () => context.push('/addExpense'),
                 ),
-
               ],
             ),
           ),

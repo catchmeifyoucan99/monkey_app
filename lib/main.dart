@@ -5,7 +5,6 @@ import 'package:expense_personal/view/screens/main/add/add_salary.dart';
 import 'package:expense_personal/view/screens/main/add/add_screen.dart';
 import 'package:expense_personal/view/screens/main/add/more_transaction_screen.dart';
 import 'package:expense_personal/view/screens/main/introduce_screen.dart';
-import 'package:expense_personal/view/screens/account/login_screen.dart';
 import 'package:expense_personal/view/screens/main/main_screen.dart';
 import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
 import 'package:expense_personal/view/screens/main/overview/expense/total_expenses_screen.dart';
