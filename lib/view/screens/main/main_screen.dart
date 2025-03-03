@@ -1,4 +1,3 @@
-import 'package:expense_personal/view/screens/main/add/add_screen.dart';
 import 'package:expense_personal/view/screens/main/notification/notification_screen.dart';
 import 'package:expense_personal/view/screens/main/saving/saving_screen.dart';
 import 'package:expense_personal/view/screens/main/setting/setting_screen.dart';
@@ -21,6 +20,7 @@ class _MainScreenState extends State<MainScreen> {
     const SavingScreen(),
     const NotificationScreen(),
     const SettingScreen(),
+    const AddScreen(),
   ];
 
   @override
@@ -29,7 +29,9 @@ class _MainScreenState extends State<MainScreen> {
       body: _screens[_currentIndex],
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/addScreen');
+          setState(() {
+            _currentIndex = 4;
+          });
         },
         backgroundColor: Colors.teal,
         elevation: 5,

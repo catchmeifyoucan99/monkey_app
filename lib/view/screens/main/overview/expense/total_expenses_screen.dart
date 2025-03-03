@@ -34,7 +34,7 @@ class _TotalExpensesScreenState extends State<TotalExpensesScreen> {
   @override
   Widget build(BuildContext context) {
     final daysInWeek = _getDaysInWeek(_focusedWeek);
-    final String totalExpense = formatCurrency(5000000, includeCurrency: false);
+    final String totalExpense = formatCurrencyV1('5000000');
 
     return Scaffold(
       appBar: AppBar(
@@ -110,9 +110,6 @@ class _TotalExpensesScreenState extends State<TotalExpensesScreen> {
               ),
             ],
           ),
-
-
-
 
 //////TapBar//////
           Expanded(

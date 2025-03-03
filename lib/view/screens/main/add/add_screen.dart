@@ -1,13 +1,16 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
+// import 'package:ocr_scan_text/ocr_scan_text.dart';
+// import 'package:ocr_scan_text_example/scan_all_module.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
-
-
+import '../../../../utils/format_utils.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -17,14 +20,32 @@ class AddScreen extends StatefulWidget {
 }
 
 class _AddScreenState extends State<AddScreen> {
+  // Widget _buildLiveScan() {
+  //   return LiveScanWidget(
+  //     ocrTextResult: (ocrTextResult) {
+  //       ocrTextResult.mapResult.forEach((module, result) {});
+  //     },
+  //     scanModules: [ScanAllModule()],
+  //   );
+  // }
 
   Future<String> encodeImage(File imageFile) async {
     List<int> imageBytes = await imageFile.readAsBytes();
     return base64Encode(imageBytes);
   }
 
+  List<Map<String, dynamic>> transactions = [];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+  }
+
   Future<void> sendDataToN8N(Map<String, dynamic> data) async {
-    final url = Uri.parse("http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
+    final url = Uri.parse(
+        "http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
 
     try {
       final response = await http.post(
@@ -43,7 +64,7 @@ class _AddScreenState extends State<AddScreen> {
     }
   }
 
-  File _image= File("");
+  File _image = File("");
   final picker = ImagePicker();
   Future getImageFromGallery() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -54,6 +75,7 @@ class _AddScreenState extends State<AddScreen> {
       }
     });
   }
+
   Future getImageFromCamera() async {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
@@ -61,56 +83,33 @@ class _AddScreenState extends State<AddScreen> {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
         // sendDataToN8N({"image": _image});
-        sendImageToHuggingFace(_image);
+        // sendImageToHuggingFace(_image);
+        getImageTotext(_image.path);
       }
     });
   }
 
-
-  Future<void> sendImageToHuggingFace(File _image) async {
-    String apiUrl = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base";
-    String token = "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";  // Replace with your API key
-
-    // Pick an image from gallery
-    XFile? pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return; // User canceled
-
-    File imageFile = File(pickedFile.path);
-    List<int> imageBytes = await imageFile.readAsBytes();
-    String base64Image = base64Encode(imageBytes);
-
-    Map<String, dynamic> requestBody = {
-      "inputs": [
-        {"image": base64Image, "text": "Can you read the receipt image and tell me how much i spent?"}
-      ]
-    };
-
-    var response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json"
-      },
-      body: jsonEncode(requestBody),
-    );
-
-    if (response.statusCode == 200) {
-      var jsonResponse = jsonDecode(response.body);
-      print("Caption: ${jsonResponse[0]["generated_text"]}");
-    } else {
-      print("Error: ${response.body}");
-    }
+  Future getImageTotext(final imagePath) async {
+    final textRecognizer = TextRecognizer();
+    final RecognizedText recognizedText =
+        await textRecognizer.processImage(InputImage.fromFilePath(imagePath));
+    String text = recognizedText.text.toString();
+    print("Text: $text");
+    askGroq(text);
+    return text;
   }
-
-  Future<void> askOllama(File _image) async {
+  Future<void> askOllama(File image) async {
     final url = Uri.parse("http://localhost:11434/api/generate");
+    List<int> imageBytes = await image.readAsBytes();
+    String base64Image = base64Encode(imageBytes);
 
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "model": "llama3.2-vision:11b",  // Use "llama3", "gemma", etc.
-        "prompt": "Can you read the image and tell me how much i spent?"
+        "model": "llama3.2-vision:11b", // Use "llama3", "gemma", etc.
+        "prompt": "Can you read the image and tell me how much i spent?",
+        "images": [base64Image]
       }),
     );
 
@@ -121,36 +120,11 @@ class _AddScreenState extends State<AddScreen> {
       print("Error: ${response.statusCode}");
     }
   }
-  Future<void> askOpenAI(File _image) async {
-    final url = Uri.parse("https://api.openai.com/v1/chat/completions");
-    final apiKey = "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"; // Replace with your OpenAI API Key
-
-    final response = await http.post(
-      url,
-      headers: {
-        "Authorization": "Bearer $apiKey",
-        "Content-Type": "application/json"
-      },
-      body: jsonEncode({
-        "model": "gpt-3.5-turbo",  // or "gpt-3.5-turbo"
-        "messages": [
-          {"role": "system", "content": "You are a helpful AI."},
-          {"role": "user", "content": "Greet me!"}
-        ]
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print("OpenAI Response: ${data['choices'][0]['message']['content']}");
-    } else {
-      print("Error: ${response.statusCode} - ${response.body}");
-    }
-  }
-  Future<void> askGroq(File _image) async {
-    String base64Image = await encodeImage(_image);
+  Future<void> askGroq(final text) async {
+    // String base64Image = await encodeImage(image);
     final url = Uri.parse("https://api.groq.com/openai/v1/chat/completions");
-    final apiKey = "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"; // Replace with your Groq API Key
+    final apiKey =
+        "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"; // Replace with your Groq API Key
 
     final response = await http.post(
       url,
@@ -159,13 +133,20 @@ class _AddScreenState extends State<AddScreen> {
         "Content-Type": "application/json"
       },
       body: jsonEncode({
-        "model": "llama-3.2-90b-vision-preview",  // or "mixtral-8x7b"
+        "model": "llama-3.2-90b-vision-preview", // or "mixtral-8x7b"
         "messages": [
           {"role": "system", "content": "You are a helpful AI accountant."},
-          {"role": "user", "content": [
-            {"type": "text", "text": "Can you read the image and tell me how much i spent?"},
-            {"type": "image_url", "image_url": "data:image/png;base64,$base64Image"}
-          ]}
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a text extract from the image: " +
+                    text +
+                    ". Tell me how much I spent in VND currency."
+              },
+            ]
+          }
         ]
       }),
     );
@@ -178,29 +159,35 @@ class _AddScreenState extends State<AddScreen> {
     }
   }
 
-  final List<Map<String, dynamic>> transactions = [
-    {
-      'icon': Icons.shopping_cart,
-      'title': 'Mua sắm',
-      'amount': '-500.000đ',
-      'date': 'Hôm nay',
-      'color': Color(0xFFEBEEF0),
-    },
-    {
-      'icon': Icons.restaurant,
-      'title': 'Ăn uống',
-      'amount': '-200.000đ',
-      'date': 'Hôm qua',
-      'color': Color(0xFFEBEEF0),
-    },
-    {
-      'icon': Icons.attach_money,
-      'title': 'Lương',
-      'amount': '+10.000.000đ',
-      'date': '2 ngày trước',
-      'color': Color(0xFFEBEEF0),
-    },
-  ];
+  Future<void> _loadTransactions() async {
+    try {
+      final QuerySnapshot snapshot = await _firestore
+          .collection('transactions')
+          .orderBy('date', descending: true)
+          .limit(7)
+          .get();
+
+      print('Dữ liệu từ Firestore: ${snapshot.docs.length} giao dịch');
+      snapshot.docs.forEach((doc) {
+        print(doc.data());
+      });
+
+      setState(() {
+        transactions = snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return {
+            'title': data['title'],
+            'amount': data['amount'] >= 0 ? '+${data['amount']}đ' : '${data['amount']}đ',
+            'date': data['date'],
+            'type': data['type'],
+            'category': data['category'],
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print('Lỗi khi tải dữ liệu từ Firestore: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -217,24 +204,6 @@ class _AddScreenState extends State<AddScreen> {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: GestureDetector(
-            onTap: () => context.pop('/home'),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Color(0xFFB0B8BF), width: 1),
-              ),
-              child: const Icon(Icons.arrow_back_ios_new,
-                  color: Colors.black,
-                  size: 18
-              ),
-            ),
-          ),
-        ),
       ),
       body: Column(
         children: [
@@ -254,16 +223,14 @@ class _AddScreenState extends State<AddScreen> {
                   borderColor: Colors.grey,
                   onTap: () => context.push('/addSalary'),
                 ),
-
                 _buildTransactionButton(
                   icon: Icons.account_balance_wallet_outlined,
                   label: 'Thêm Chi Tiêu',
                   backgroundColor: Colors.teal,
                   textColor: Colors.white,
                   borderColor: Colors.teal,
-                  onTap: () => context.go('/addExpense'),
+                  onTap: () => context.push('/addExpense'),
                 ),
-
               ],
             ),
           ),
@@ -306,21 +273,39 @@ class _AddScreenState extends State<AddScreen> {
                       itemBuilder: (context, index) {
                         final transaction = transactions[index];
                         return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: transaction['color'],
-                            child: Icon(
-                              transaction['icon'],
-                              color: Colors.black,
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: transaction['type'] == 'income'
+                                  ? Colors.teal.withOpacity(0.2)
+                                  : Colors.teal.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                transaction['type'] == 'income'
+                                    ? Icons.attach_money
+                                    : Icons.shopping_cart,
+                                color: transaction['type'] == 'income'
+                                    ? Colors.teal
+                                    : Colors.teal,
+                              ),
                             ),
                           ),
-                          title: Text(transaction['title']),
-                          subtitle: Text(transaction['date']),
+                          title: Text(
+                            transaction['title'],
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            formatDateV2(DateTime.parse(transaction['date'])),
+                          ),
                           trailing: Text(
-                            transaction['amount'],
+                            formatCurrencyV2(transaction['amount']),
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: transaction['amount'].startsWith('-')
+                              color: transaction['type'] == 'income'
                                   ? Colors.black
                                   : Colors.black,
                             ),
@@ -374,7 +359,7 @@ class _AddScreenState extends State<AddScreen> {
     required Color backgroundColor,
     required Color textColor,
     required Color borderColor,
-    required VoidCallback onTap, // Thêm callback để xử lý sự kiện nhấn
+    required VoidCallback onTap,
   }) {
     return SizedBox(
       width: 130,

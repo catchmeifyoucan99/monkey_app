@@ -1,8 +1,8 @@
-import 'package:dotted_border/dotted_border.dart';
 import 'package:expense_personal/widgets/animated_add_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../widgets/week_calendar_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddSalaryScreen extends StatefulWidget {
   const AddSalaryScreen({super.key});
@@ -11,14 +11,36 @@ class AddSalaryScreen extends StatefulWidget {
   State<AddSalaryScreen> createState() => _AddSalaryScreenState();
 }
 
+Future<void> addIncome(String title, double amount, String category, DateTime date) async {
+  try {
+    await FirebaseFirestore.instance.collection('transactions').add({
+      'title': title,
+      'amount': amount,
+      'category': category,
+      'date': date.toIso8601String(),
+      'type': 'income',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    print('Thu nhập đã được lưu!');
+  } catch (e) {
+    print('Lỗi khi lưu thu nhập: $e');
+  }
+}
+
+
 class _AddSalaryScreenState extends State<AddSalaryScreen> {
   DateTime _focusedWeek = DateTime.now();
   DateTime? _selectedDay;
   final TextEditingController titleController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
-  String selectedCategory = 'Lương';
 
-  final List<String> categories = ['Lương', 'Thưởng', 'Đầu tư', 'Khác'];
+  String? _selectedCategory;
+
+  void _onCategorySelected(String? category) {
+    setState(() {
+      _selectedCategory = category;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,15 +181,54 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    AnimatedAddButton(),
+                    AnimatedAddButton( onCategorySelected: _onCategorySelected, type: 'income',),
 
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
-                          context.go('/home');
+                        onPressed: () async {
+                          if (titleController.text.isEmpty || amountController.text.isEmpty || _selectedCategory == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+                            );
+                            return;
+                          }
+
+                          double amount;
+                          try {
+                            amount = double.parse(amountController.text);
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Số tiền không hợp lệ')),
+                            );
+                            return;
+                          }
+
+                          DateTime selectedDate = _selectedDay ?? _focusedWeek;
+                          try {
+                            await addIncome(
+                              titleController.text,
+                              amount,
+                              _selectedCategory!,
+                              selectedDate,
+                            );
+
+                            titleController.clear();
+                            amountController.clear();
+                            setState(() {
+                              _selectedCategory = null;
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Lưu thu nhập thành công')),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Lỗi khi lưu thu nhập: $e')),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.teal,
@@ -186,34 +247,6 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDottedButton() {
-    return SizedBox(
-      width: 55,
-      height: 55,
-      child: DottedBorder(
-        borderType: BorderType.RRect,
-        radius: const Radius.circular(16),
-        dashPattern: [6, 6],
-        color: Colors.grey,
-        strokeWidth: 1.5,
-        child: InkWell(
-          onTap: () {
-            print('Thêm mới giao dịch');
-          },
-          child: Container(
-            height: 55,
-            width: 55,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(Icons.add, size: 22, color: Colors.grey),
           ),
         ),
       ),
