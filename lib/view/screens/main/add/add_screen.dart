@@ -37,12 +37,6 @@ class _AddScreenState extends State<AddScreen> {
   List<Map<String, dynamic>> transactions = [];
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadTransactions();
-  }
-
   Future<void> sendDataToN8N(Map<String, dynamic> data) async {
     final url = Uri.parse(
         "http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
@@ -107,9 +101,8 @@ class _AddScreenState extends State<AddScreen> {
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "model": "llama3.2-vision:11b", // Use "llama3", "gemma", etc.
-        "prompt": "Can you read the image and tell me how much i spent?",
-        "images": [base64Image]
+        "model": "llama3.2-vision:11b",
+        "prompt": "Can you read the image and tell me how much i spent?"
       }),
     );
 
