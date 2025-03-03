@@ -7,7 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+
 import '../../../../utils/format_utils.dart';
+
+
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -20,6 +23,7 @@ class _AddScreenState extends State<AddScreen> {
 
   List<Map<String, dynamic>> transactions = [];
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -107,6 +111,7 @@ class _AddScreenState extends State<AddScreen> {
         transactions = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
           return {
+            'id': doc.id,
             'title': data['title'],
             'amount': data['amount'] >= 0 ? '+${data['amount']}đ' : '${data['amount']}đ',
             'date': data['date'],
@@ -114,9 +119,13 @@ class _AddScreenState extends State<AddScreen> {
             'category': data['category'],
           };
         }).toList();
+        isLoading = false;
       });
     } catch (e) {
       print('Lỗi khi tải dữ liệu từ Firestore: $e');
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -195,56 +204,100 @@ class _AddScreenState extends State<AddScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.more_horiz),
-                          onPressed: () {},
+                          onPressed: () {
+                            context.push('/moreTransactions');
+                          },
                         ),
                       ],
                     ),
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: transactions.length,
-                      itemBuilder: (context, index) {
-                        final transaction = transactions[index];
-                        return ListTile(
-                          leading: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: transaction['type'] == 'income'
-                                  ? Colors.teal.withOpacity(0.2)
-                                  : Colors.teal.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(9),
+                  isLoading
+                      ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                      : Expanded(
+                    child: AnimatedOpacity(
+                      opacity: isLoading ? 0 : 1,
+                      duration: Duration(seconds: 1),
+                      child: ListView.builder(
+                        itemCount: transactions.length,
+                        itemBuilder: (context, index) {
+                          final transaction = transactions[index];
+                          return Dismissible(
+                            key: Key(transaction['title']),
+                            direction: DismissDirection.horizontal,
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerLeft,
+                              padding: EdgeInsets.symmetric(horizontal: 20),
+                              child: Icon(Icons.delete, color: Colors.white),
                             ),
-                            child: Center(
-                              child: Icon(
-                                transaction['type'] == 'income'
-                                    ? Icons.attach_money
-                                    : Icons.shopping_cart,
-                                color: transaction['type'] == 'income'
-                                    ? Colors.teal
-                                    : Colors.teal,
+                            secondaryBackground: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: EdgeInsets.symmetric(horizontal: 20),
+                              child: Icon(Icons.delete, color: Colors.white),
+                            ),
+                            onDismissed: (direction) async {
+                              try {
+                                final docId = transactions[index]['id'];
+
+                                if (docId != null) {
+                                  await _firestore.collection('transactions').doc(docId).delete();
+                                  print("Giao dịch đã bị xoá khỏi Firestore: $docId");
+                                }
+
+                                setState(() {
+                                  transactions.removeAt(index);
+                                });
+
+                              } catch (e) {
+                                print("Lỗi khi xoá giao dịch: $e");
+                              }
+                            },
+
+                            child: ListTile(
+                              leading: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: transaction['type'] == 'income'
+                                      ? Colors.teal.withOpacity(0.2)
+                                      : Colors.teal.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(9),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    transaction['type'] == 'income'
+                                        ? Icons.attach_money
+                                        : Icons.shopping_cart,
+                                    color: transaction['type'] == 'income'
+                                        ? Colors.teal
+                                        : Colors.teal,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                transaction['title'],
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                formatDateV2(DateTime.parse(transaction['date'])),
+                              ),
+                              trailing: Text(
+                                formatCurrencyV2(transaction['amount']),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: transaction['type'] == 'income'
+                                      ? Colors.black
+                                      : Colors.black,
+                                ),
                               ),
                             ),
-                          ),
-                          title: Text(
-                            transaction['title'],
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            formatDateV2(DateTime.parse(transaction['date'])),
-                          ),
-                          trailing: Text(
-                            formatCurrencyV2(transaction['amount']),
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: transaction['type'] == 'income'
-                                  ? Colors.black
-                                  : Colors.black,
-                            ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],
