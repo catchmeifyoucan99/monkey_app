@@ -84,11 +84,7 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
         centerTitle: true,
         flexibleSpace: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.teal[800]!, Colors.teal[400]!],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.teal,
           ),
         ),
         elevation: 4,
@@ -103,6 +99,7 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
           _buildPaginationControls(),
         ],
       ),
+      backgroundColor: const Color(0xFFeaedf0),
     );
   }
 
@@ -116,7 +113,7 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
 
   Widget _buildTransactionList() {
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(15, 30, 15, 15),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -226,7 +223,7 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
             padding: const EdgeInsets.symmetric(
                 horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.blue[50],
+              color: Colors.teal[50],
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

@@ -8,25 +8,8 @@ class AddExpenseScreen extends StatefulWidget {
   const AddExpenseScreen({super.key});
 
   @override
-  State<AddExpenseScreen> createState() => _AddExpenseScreenState();
+  _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
-
-Future<void> addExpense(String title, double amount, String category, DateTime date) async {
-  try {
-    await FirebaseFirestore.instance.collection('transactions').add({
-      'title': title,
-      'amount': amount,
-      'category': category,
-      'date': date.toIso8601String(),
-      'type': 'expense',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    print('Chi tiêu đã được lưu!');
-  } catch (e) {
-    print('Lỗi khi lưu chi tiêu: $e');
-  }
-}
-
 
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
   DateTime _focusedWeek = DateTime.now();
@@ -40,6 +23,63 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     setState(() {
       _selectedCategory = category;
     });
+  }
+
+  Future<void> addExpense(String title, double amount, String category, DateTime date) async {
+    try {
+      await FirebaseFirestore.instance.collection('transactions').add({
+        'title': title,
+        'amount': amount,
+        'category': category,
+        'date': date.toIso8601String(),
+        'type': 'expense',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('Chi tiêu đã được lưu!');
+    } catch (e) {
+      print('Lỗi khi lưu chi tiêu: $e');
+    }
+  }
+
+  Future<void> handleSaveTransaction() async {
+    if (titleController.text.isEmpty || amountController.text.isEmpty || _selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+      );
+      return;
+    }
+    double amount;
+    try {
+      amount = double.parse(amountController.text) * -1;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Số tiền không hợp lệ')),
+      );
+      return;
+    }
+    DateTime selectedDate = _selectedDay ?? _focusedWeek;
+    try {
+      await addExpense(
+        titleController.text,
+        amount,
+        _selectedCategory!,
+        selectedDate,
+      );
+
+      titleController.clear();
+      amountController.clear();
+      setState(() {
+        _selectedCategory = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lưu thu nhập thành công')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi khi lưu thu nhập: $e')),
+      );
+    }
   }
 
   @override
@@ -189,46 +229,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () async {
-                          if (titleController.text.isEmpty || amountController.text.isEmpty || _selectedCategory == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
-                            );
-                            return;
-                          }
-
-                          double amount;
-                          try {
-                            amount = double.parse(amountController.text) * -1;
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Số tiền không hợp lệ')),
-                            );
-                            return;
-                          }
-
-                          DateTime selectedDate = _selectedDay ?? _focusedWeek;
-                          try {
-                            await addExpense(
-                              titleController.text,
-                              amount,
-                              _selectedCategory!,
-                              selectedDate,
-                            );
-
-                            titleController.clear();
-                            amountController.clear();
-                            setState(() {
-                              _selectedCategory = null;
-                            });
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Lưu thu nhập thành công')),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Lỗi khi lưu thu nhập: $e')),
-                            );
-                          }
+                          await handleSaveTransaction();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.teal,
