@@ -17,6 +17,7 @@ class _CameraScreenState extends State<CameraScreen> {
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   File? _image;
+  File get image => _image!;
   final picker = ImagePicker();
 
   Future getImageFromCamera() async {
