@@ -1,0 +1,7 @@
+{
+  "tessdata": "assets/tessdata/",
+  "languages": ["eng", "tha"],
+  "psm": "6",
+  "oem": "1",
+  "debug": false
+}
