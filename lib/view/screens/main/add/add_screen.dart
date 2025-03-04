@@ -10,7 +10,6 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
-
 import '../../../../utils/format_utils.dart';
 
 
@@ -383,7 +382,7 @@ class _AddScreenState extends State<AddScreen> {
         child: InkWell(
           onTap: () {
             print('Thêm mới giao dịch');
-            getImageFromCamera();
+            context.push('/addCamera');
           },
           child: Container(
             height: 100,
@@ -411,7 +410,7 @@ class _AddScreenState extends State<AddScreen> {
       width: 130,
       height: 100,
       child: InkWell(
-        onTap: onTap, // Gọi hàm `onTap` khi nhấn
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
