@@ -155,6 +155,12 @@ class _AddScreenState extends State<AddScreen> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+  }
+
   Future<void> _loadTransactions() async {
     try {
       final QuerySnapshot snapshot = await _firestore
@@ -173,11 +179,11 @@ class _AddScreenState extends State<AddScreen> {
           final data = doc.data() as Map<String, dynamic>;
           return {
             'id': doc.id,
-            'title': data['title'],
+            'title': data['title'] ?? "Không có tiêu đề",
             'amount': data['amount'] >= 0 ? '+${data['amount']}đ' : '${data['amount']}đ',
-            'date': data['date'],
-            'type': data['type'],
-            'category': data['category'],
+            'date': data['date'] ?? "Không có ngày",
+            'type': data['type'] ?? "Không rõ loại",
+            'category': data['category'] ?? "Không có danh mục",
           };
         }).toList();
         isLoading = false;
@@ -189,6 +195,8 @@ class _AddScreenState extends State<AddScreen> {
       });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
