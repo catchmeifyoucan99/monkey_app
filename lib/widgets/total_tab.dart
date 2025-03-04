@@ -74,13 +74,33 @@ class TotalTab extends StatelessWidget {
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
-              leading: Icon(transaction['type'] == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
-                  color: transaction['type'] == 'income' ? Colors.green : Colors.red),
-              title: Text(transaction['description'], style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(DateFormat('dd/MM/yyyy').format(transaction['date']), style: const TextStyle(color: Colors.grey)),
+              leading: Icon(
+                  transaction['type'] == 'income'
+                      ? Icons.arrow_downward
+                      : Icons.arrow_upward,
+                  color: transaction['type'] == 'income'
+                      ? Colors.green
+                      : Colors.red
+              ),
+              title: Text(
+                  transaction['title'] ?? '',
+                  style: const TextStyle(fontWeight: FontWeight.bold)
+              ),
+              subtitle: Text(
+                  DateFormat('dd/MM/yyyy').format(
+                      transaction['date'] ?? DateTime.now()
+                  ),
+                  style: const TextStyle(color: Colors.grey)
+              ),
               trailing: Text(
-                "${NumberFormat("#,##0").format(transaction['amount'])} VND",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: transaction['type'] == 'income' ? Colors.green : Colors.red),
+                "${NumberFormat("#,##0").format(transaction['amount'] ?? 0)} VND", // Thêm null check
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: transaction['type'] == 'income'
+                        ? Colors.green
+                        : Colors.red
+                ),
               ),
             ),
           );

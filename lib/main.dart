@@ -1,8 +1,10 @@
 import 'package:expense_personal/providers/auth_provider.dart';
 import 'package:expense_personal/view/screens/account/register_screen.dart';
 import 'package:expense_personal/view/screens/main/add/add_expense.dart';
+import 'package:expense_personal/view/screens/main/add/add_from_camera.dart';
 import 'package:expense_personal/view/screens/main/add/add_salary.dart';
 import 'package:expense_personal/view/screens/main/add/add_screen.dart';
+import 'package:expense_personal/view/screens/main/add/more_transaction_screen.dart';
 import 'package:expense_personal/view/screens/main/introduce_screen.dart';
 import 'package:expense_personal/view/screens/main/main_screen.dart';
 import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
@@ -109,6 +111,14 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/addExpense',
           builder: (context, state) => const AddExpenseScreen(),
+        ),
+        GoRoute(
+          path: '/addCamera',
+          builder: (context, state) => CameraScreen(),
+        ),
+        GoRoute(
+          path: '/moreTransactions',
+          builder: (context, state) => const MoreTransactionScreen(),
         ),
 
       ],

@@ -5,6 +5,8 @@ import 'package:expense_personal/view/screens/main/setting/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
 
+import 'add/add_screen.dart';
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 

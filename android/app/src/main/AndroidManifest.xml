@@ -9,6 +9,7 @@
         android:label="expense_personal"
         android:name="${applicationName}"
         android:requestLegacyExternalStorage="true"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@drawable/logo">
         <activity
             android:name=".MainActivity"

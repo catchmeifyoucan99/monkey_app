@@ -44,7 +44,7 @@ class TotalCircle extends StatelessWidget {
                 total,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
