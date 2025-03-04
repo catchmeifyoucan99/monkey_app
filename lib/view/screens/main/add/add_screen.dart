@@ -1,10 +1,16 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 // import 'package:ocr_scan_text/ocr_scan_text.dart';
 // import 'package:ocr_scan_text_example/scan_all_module.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -20,6 +26,8 @@ class AddScreen extends StatefulWidget {
 }
 
 class _AddScreenState extends State<AddScreen> {
+  String _ocrText = '';
+
   // Widget _buildLiveScan() {
   //   return LiveScanWidget(
   //     ocrTextResult: (ocrTextResult) {
@@ -73,9 +81,13 @@ class _AddScreenState extends State<AddScreen> {
   Future getImageFromCamera() async {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
+    // await copyTessData();
+    // await checkTessDataFiles();
+    // await loadTessConfig();
     setState(() {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
+        // _extractText(pickedFile.path);
         // sendDataToN8N({"image": _image});
         // sendImageToHuggingFace(_image);
         getImageTotext(_image.path);
@@ -83,15 +95,140 @@ class _AddScreenState extends State<AddScreen> {
     });
   }
 
+  Future<void> copyTessData() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final tessdataPath = '${directory.path}/tessdata';
+    final tessdataDir = Directory(tessdataPath);
+
+    if (!await tessdataDir.exists()) {
+      await tessdataDir.create(recursive: true);
+    }
+
+    final trainedDataFiles = ['eng.traineddata', 'tha.traineddata'];
+
+    for (final fileName in trainedDataFiles) {
+      final assetPath = 'assets/tessdata/$fileName';
+      final filePath = '$tessdataPath/$fileName';
+
+      final file = File(filePath);
+      if (!(await file.exists())) {
+        final ByteData data = await rootBundle.load(assetPath);
+        final List<int> bytes = data.buffer.asUint8List();
+        await file.writeAsBytes(bytes);
+        print("✅ Copied $fileName to $tessdataPath");
+      } else {
+        print("⚠️ $fileName already exists in $tessdataPath");
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>> loadTessConfig() async {
+    try {
+      String configString =
+          await rootBundle.loadString('assets/tessdata_config.json');
+      final Map<String, dynamic> config = json.decode(configString);
+      if (config == null) {
+        print("Error: tessdata_config.json is null!");
+      } else {
+        print("Tesseract Config Loaded: $config");
+      }
+      return config;
+    } catch (e) {
+      print("Error loading tessdata_config.json: $e");
+      return {};
+    }
+  }
+
+  Future<void> checkTessDataFiles() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final tessdataPath = '${directory.path}/tessdata';
+
+    final engFile = File('$tessdataPath/eng.traineddata');
+    final thaFile = File('$tessdataPath/tha.traineddata');
+
+    print("Checking tessdata files...");
+
+    if (await engFile.exists()) {
+      print("✅ eng.traineddata exists at $tessdataPath");
+    } else {
+      print("❌ eng.traineddata is MISSING! Copy it manually.");
+    }
+
+    if (await thaFile.exists()) {
+      print("✅ tha.traineddata exists at $tessdataPath");
+    } else {
+      print("❌ tha.traineddata is MISSING! Copy it manually.");
+    }
+  }
+
+  Future<void> _extractText(String imagePath) async {
+    if (imagePath.isEmpty) {
+      print("Error: Image path is empty!");
+      return;
+    }
+    final directory = await getApplicationDocumentsDirectory();
+    final tessdataParent = directory.path;
+    String text = await FlutterTesseractOcr.extractText(
+      imagePath,
+      language: 'eng',
+      args: {
+        "tessdata": tessdataParent,
+      },
+    );
+
+    if (text == null) {
+      print("Error: OCR returned null text");
+      return;
+    }
+    print("Text: $text");
+
+    // setState(() {
+    //   _ocrText = text;
+    // });
+  }
+
   Future getImageTotext(final imagePath) async {
     final textRecognizer = TextRecognizer();
-    final RecognizedText recognizedText =
-        await textRecognizer.processImage(InputImage.fromFilePath(imagePath));
-    String text = recognizedText.text.toString();
-    print("Text: $text");
-    askGroq(text);
-    return text;
+    try {
+      final RecognizedText recognizedText =
+          await textRecognizer.processImage(InputImage.fromFilePath(imagePath));
+      String text = formatTextWithSorting(recognizedText);
+      print("Text: $text");
+      askGroq(text);
+    } finally {
+      textRecognizer.close();
+    }
   }
+
+  String formatTextWithSorting(RecognizedText recognizedText) {
+    List<TextLine> allLines = [];
+
+    for (TextBlock block in recognizedText.blocks) {
+      allLines.addAll(block.lines);
+    }
+
+    // Sort lines first by Y position, then by X position
+    allLines.sort((a, b) {
+      int dy = a.boundingBox.top.compareTo(b.boundingBox.top);
+      return (dy != 0) ? dy : a.boundingBox.left.compareTo(b.boundingBox.left);
+    });
+
+    return allLines.map((line) => line.text).join("\n");
+  }
+
+  String formatTextWithLineBreaks(RecognizedText recognizedText) {
+    List<String> formattedLines = [];
+
+    for (TextBlock block in recognizedText.blocks) {
+      for (TextLine line in block.lines) {
+        formattedLines.add(line.text);
+      }
+      formattedLines.add(""); // Add a blank line to separate blocks
+    }
+
+    return formattedLines.join("\n");
+  }
+
   Future<void> askOllama(File image) async {
     final url = Uri.parse("http://localhost:11434/api/generate");
     List<int> imageBytes = await image.readAsBytes();
@@ -113,6 +250,7 @@ class _AddScreenState extends State<AddScreen> {
       print("Error: ${response.statusCode}");
     }
   }
+
   Future<void> askGroq(final text) async {
     // String base64Image = await encodeImage(image);
     final url = Uri.parse("https://api.groq.com/openai/v1/chat/completions");
@@ -161,16 +299,18 @@ class _AddScreenState extends State<AddScreen> {
           .get();
 
       print('Dữ liệu từ Firestore: ${snapshot.docs.length} giao dịch');
-      snapshot.docs.forEach((doc) {
+      for (var doc in snapshot.docs) {
         print(doc.data());
-      });
+      }
 
       setState(() {
         transactions = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
           return {
             'title': data['title'],
-            'amount': data['amount'] >= 0 ? '+${data['amount']}đ' : '${data['amount']}đ',
+            'amount': data['amount'] >= 0
+                ? '+${data['amount']}đ'
+                : '${data['amount']}đ',
             'date': data['date'],
             'type': data['type'],
             'category': data['category'],
