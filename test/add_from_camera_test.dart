@@ -6,7 +6,6 @@ import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'dart:io';
 import 'package:expense_personal/view/screens/main/add/add_from_camera.dart';
 
 class MockImagePicker extends Mock implements ImagePicker {}

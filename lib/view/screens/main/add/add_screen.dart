@@ -117,12 +117,8 @@ class _AddScreenState extends State<AddScreen> {
       String configString =
           await rootBundle.loadString('assets/tessdata_config.json');
       final Map<String, dynamic> config = json.decode(configString);
-      if (config == null) {
-        print("Error: tessdata_config.json is null!");
-      } else {
-        print("Tesseract Config Loaded: $config");
-      }
-      return config;
+      print("Tesseract Config Loaded: $config");
+          return config;
     } catch (e) {
       print("Error loading tessdata_config.json: $e");
       return {};
@@ -165,11 +161,6 @@ class _AddScreenState extends State<AddScreen> {
         "tessdata": tessdataParent,
       },
     );
-
-    if (text == null) {
-      print("Error: OCR returned null text");
-      return;
-    }
     print("Text: $text");
 
     // setState(() {

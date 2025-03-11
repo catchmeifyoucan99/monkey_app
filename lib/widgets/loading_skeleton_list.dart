@@ -6,11 +6,11 @@ class LoadingSkeletonList extends StatefulWidget {
   final double itemHeight;
 
   const LoadingSkeletonList({
-    Key? key,
+    super.key,
     this.itemCount = 4, // Đã thay đổi itemCount thành 4
     this.itemWidth = 30,
     this.itemHeight = 10,
-  }) : super(key: key);
+  });
 
   @override
   _LoadingSkeletonListState createState() => _LoadingSkeletonListState();
