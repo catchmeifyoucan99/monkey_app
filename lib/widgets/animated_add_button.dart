@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 
+import '../utils/getUserId.dart';
 import 'trash_bin.dart';
 
 class AnimatedAddButton extends StatefulWidget {
@@ -25,6 +26,8 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
   String? _selectedCategory;
   bool _showTrash = false;
 
+  String? userId = getCurrentUserId();
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +41,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('${widget.type}_categories')
+          .where('userId', isEqualTo: userId)
           .get();
       setState(() {
         _categories.addAll(snapshot.docs.map((doc) => doc['name'] as String));
@@ -54,6 +58,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
           .add({
         'name': name,
         'type': widget.type,
+        'userId': userId,
       });
       setState(() {
         _categories.add(name);
@@ -67,7 +72,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('${type}_categories')
-          .where('name', isEqualTo: categoryName)
+          .where('userId', isEqualTo: userId)
           .get();
 
       for(final doc in querySnapshot.docs) {

@@ -1,6 +1,7 @@
 import 'package:expense_personal/widgets/animated_add_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../utils/getUserId.dart';
 import '../../../../widgets/week_calendar_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -13,6 +14,13 @@ class AddSalaryScreen extends StatefulWidget {
 
 Future<void> addIncome(String title, double amount, String category, DateTime date) async {
   try {
+    String? userId = getCurrentUserId();
+
+    if (userId == null) {
+      print('Không tìm thấy người dùng');
+      return;
+    }
+
     await FirebaseFirestore.instance.collection('transactions').add({
       'title': title,
       'amount': amount,
@@ -20,6 +28,7 @@ Future<void> addIncome(String title, double amount, String category, DateTime da
       'date': date.toIso8601String(),
       'type': 'income',
       'createdAt': FieldValue.serverTimestamp(),
+      'userId': userId,
     });
     print('Thu nhập đã được lưu!');
   } catch (e) {

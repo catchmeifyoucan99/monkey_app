@@ -1,6 +1,8 @@
 import 'package:expense_personal/widgets/animated_add_button.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../utils/getUserId.dart';
 import '../../../../widgets/week_calendar_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -11,8 +13,16 @@ class AddExpenseScreen extends StatefulWidget {
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
 
+
 Future<void> addExpense(String title, double amount, String category, DateTime date) async {
   try {
+    String? userId = getCurrentUserId();
+
+    if (userId == null) {
+      print('Không tìm thấy người dùng');
+      return;
+    }
+
     await FirebaseFirestore.instance.collection('transactions').add({
       'title': title,
       'amount': amount,
@@ -20,6 +30,7 @@ Future<void> addExpense(String title, double amount, String category, DateTime d
       'date': date.toIso8601String(),
       'type': 'expense',
       'createdAt': FieldValue.serverTimestamp(),
+      'userId': userId,
     });
     print('Chi tiêu đã được lưu!');
   } catch (e) {
