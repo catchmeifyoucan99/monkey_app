@@ -61,45 +61,61 @@ class TotalTab extends StatelessWidget {
   }
 
   Widget _buildTabContent(List<Map<String, dynamic>> transactions, Color color) {
+    final numberFormat = NumberFormat("#,##0");
+    final dateFormat = DateFormat('dd/MM/yyyy');
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       child: transactions.isEmpty
-          ? Center(child: Text('Chưa có dữ liệu', style: TextStyle(fontSize: 16, color: color)))
+          ? Center(
+        child: Text(
+          'Chưa có dữ liệu',
+          style: TextStyle(fontSize: 16, color: Colors.red),
+        ),
+      )
           : ListView.builder(
         itemCount: transactions.length,
         itemBuilder: (context, index) {
           var transaction = transactions[index];
+
+          IconData transactionIcon = transaction['type'] == 'income'
+              ? Icons.arrow_downward
+              : Icons.arrow_upward;
+          Color transactionColor = transaction['type'] == 'income'
+              ? Colors.green
+              : Colors.red;
+
+          String formattedAmount = numberFormat.format(transaction['amount'] ?? 0);
+          String formattedDate = dateFormat.format(transaction['date'] ?? DateTime.now());
+
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            color: Color(0xFFF6F6F6),
             child: ListTile(
-              leading: Icon(
-                  transaction['type'] == 'income'
-                      ? Icons.arrow_downward
-                      : Icons.arrow_upward,
-                  color: transaction['type'] == 'income'
-                      ? Colors.green
-                      : Colors.red
-              ),
+              leading: Icon(transactionIcon, color: transactionColor),
               title: Text(
-                  transaction['title'] ?? '',
-                  style: const TextStyle(fontWeight: FontWeight.bold)
+                transaction['title'] ?? '',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
               subtitle: Text(
-                  DateFormat('dd/MM/yyyy').format(
-                      transaction['date'] ?? DateTime.now()
-                  ),
-                  style: const TextStyle(color: Colors.grey)
+                formattedDate,
+                style: const TextStyle(
+                  color: Colors.grey,
+                ),
               ),
               trailing: Text(
-                "${NumberFormat("#,##0").format(transaction['amount'] ?? 0)} VND", // Thêm null check
+                "$formattedAmount VND",
                 style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: transaction['type'] == 'income'
-                        ? Colors.green
-                        : Colors.red
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: transactionColor,
                 ),
               ),
             ),
@@ -108,5 +124,6 @@ class TotalTab extends StatelessWidget {
       ),
     );
   }
+
 
 }

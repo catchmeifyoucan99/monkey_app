@@ -56,8 +56,12 @@ dependencies:
   camera: 0.11.1
   mockito: 5.4.5
   test: 1.25.8
+  fake_cloud_firestore: ^3.1.0
+  firebase_core_platform_interface: 5.4.0
+  build_runner: 2.4.15
 
 dev_dependencies:
+  mockito: ^5.0.0
   flutter_test:
     sdk: flutter
 

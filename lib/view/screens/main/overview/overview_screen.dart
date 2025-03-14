@@ -30,7 +30,7 @@ class _OverviewScreenState extends State<OverviewScreen> with SingleTickerProvid
       appBar: AppBar(
         title: const Text(
           'Tổng quan',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: Colors.white,
         elevation: 0,

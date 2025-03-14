@@ -26,7 +26,7 @@ class _RegisterScreen extends State<RegisterScreen> {
     return regex.hasMatch(email);
   }
 
-  void register() async {
+  Future<void> register() async {
     final authProvider = context.read<AuthProvider>();
 
     String name = nameController.text.trim();
@@ -69,40 +69,32 @@ class _RegisterScreen extends State<RegisterScreen> {
       return;
     }
 
-    if(!mounted) return;
-
     try {
-      bool success = await authProvider.register(email, password, name);
+      bool success = await authProvider.register(email, name, password);
 
       if (success) {
-        dev.log("Đăng ký thành công!", name: "RegisterScreen");
-
-        if(!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đăng ký thành công!')),
         );
 
+        String? uid = authProvider.user?.uid;
+        dev.log("UID người dùng: $uid", name: "RegisterScreen");
+
         Future.delayed(const Duration(seconds: 1), () {
-          if(mounted) return context.go('/login');
+          context.go('/login');
         });
-
       } else {
-
-        if(!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tài khoản đã được đăng kí!')),
+          const SnackBar(content: Text('Tài khoản đã được đăng ký!')),
         );
       }
     } catch (e) {
-      dev.log("Đăng ký lỗi $e", name: "RegisterScreen");
-
-      if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi đăng ký: ${e.toString()}')),
       );
     }
-
   }
+
 
   @override
   Widget build(BuildContext context) {

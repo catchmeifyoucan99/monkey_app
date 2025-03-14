@@ -11,6 +11,22 @@ class AddExpenseScreen extends StatefulWidget {
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
 
+Future<void> addExpense(String title, double amount, String category, DateTime date) async {
+  try {
+    await FirebaseFirestore.instance.collection('transactions').add({
+      'title': title,
+      'amount': amount,
+      'category': category,
+      'date': date.toIso8601String(),
+      'type': 'expense',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    print('Chi tiêu đã được lưu!');
+  } catch (e) {
+    print('Lỗi khi lưu chi tiêu: $e');
+  }
+}
+
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
   DateTime _focusedWeek = DateTime.now();
   DateTime? _selectedDay;
@@ -23,22 +39,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     setState(() {
       _selectedCategory = category;
     });
-  }
-
-  Future<void> addExpense(String title, double amount, String category, DateTime date) async {
-    try {
-      await FirebaseFirestore.instance.collection('transactions').add({
-        'title': title,
-        'amount': amount,
-        'category': category,
-        'date': date.toIso8601String(),
-        'type': 'expense',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      print('Chi tiêu đã được lưu!');
-    } catch (e) {
-      print('Lỗi khi lưu chi tiêu: $e');
-    }
   }
 
   Future<void> handleSaveTransaction() async {
@@ -72,6 +72,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         _selectedCategory = null;
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lưu thu nhập thành công')),
       );

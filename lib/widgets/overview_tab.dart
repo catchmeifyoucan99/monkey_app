@@ -19,8 +19,8 @@ class OverviewTab extends StatelessWidget {
             controller: tabController,
             tabs: const [
               Tab(text: 'Saving'),
-              Tab(text: 'Remind'),
-              Tab(text: 'Budget'),
+              Tab(text: 'Income'),
+              Tab(text: 'Expense'),
             ],
             labelColor: Colors.white,
             unselectedLabelColor: Colors.black,
@@ -95,7 +95,8 @@ class OverviewTab extends StatelessWidget {
           var transaction = transactions[index];
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
-            elevation: 2,
+            elevation: 1,
+            color: Color(0xFFF6F6F6),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
               leading: Icon(transaction['type'] == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
