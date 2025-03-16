@@ -1,11 +1,80 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expense_personal/utils/getUserId.dart';
 import 'package:flutter/material.dart';
-
 import 'package:go_router/go_router.dart';
-
 import '../utils/format_utils.dart';
 
-class OverviewCardList extends StatelessWidget {
+class OverviewCardList extends StatefulWidget {
+
   const OverviewCardList({super.key});
+
+  @override
+  _OverviewCardListState createState() => _OverviewCardListState();
+}
+
+class _OverviewCardListState extends State<OverviewCardList> {
+  int totalIncome = 0;
+  int totalExpense = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTransactions();
+  }
+
+  Future<void> _fetchTransactions() async {
+    final String? userId = getCurrentUserId();
+    print("Current User ID: $userId");
+    DateTime now = DateTime.now();
+    DateTime startOfMonth = DateTime(now.year, now.month, 1);
+    DateTime endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+
+    QuerySnapshot incomeQuery = await FirebaseFirestore.instance
+        .collection('transactions')
+        .where('userId', isEqualTo: userId)
+        .where('type', isEqualTo: 'income')
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+        .get();
+
+    QuerySnapshot expenseQuery = await FirebaseFirestore.instance
+        .collection('transactions')
+        .where('userId', isEqualTo: userId)
+        .where('type', isEqualTo: 'expense')
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+        .get();
+
+
+    int incomeTotal = 0;
+    int expenseTotal = 0;
+    print("Start of Month: $startOfMonth");
+    print("End of Month: $endOfMonth");
+    print("Income Total: $incomeTotal");
+    print("Expense Total: $expenseTotal");
+    print("Income Data: ${incomeQuery.docs.length}");
+    print("Expense Data: ${expenseQuery.docs.length}");
+
+
+    // Tính tổng thu nhập
+    for (var doc in incomeQuery.docs) {
+      incomeTotal += (doc['amount'] as num).toInt();
+    }
+
+    // Tính tổng chi tiêu
+    for (var doc in expenseQuery.docs) {
+      expenseTotal += (doc['amount'] as num).toInt();
+    }
+
+    setState(() {
+      totalIncome = incomeTotal;
+      totalExpense = expenseTotal;
+    });
+    print("Query Result Income: ${incomeQuery.docs}");
+    print("Query Result Expense: ${expenseQuery.docs}");
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,13 +84,13 @@ class OverviewCardList extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         children: [
-          _buildOverviewCard(context, 'Tổng Thu Nhập', '5000000', Colors.black, Icons.account_balance_wallet, () {
+          _buildOverviewCard(context, 'Tổng Thu Nhập', totalIncome.toString(), Colors.black, Icons.account_balance_wallet, () {
             context.push('/totalSalary');
           }),
-          _buildOverviewCard(context, 'Tổng Chi Tiêu', '5000000', Colors.white, Icons.shopping_cart, () {
+          _buildOverviewCard(context, 'Tổng Chi Tiêu', totalExpense.toString(), Colors.white, Icons.shopping_cart, () {
             context.push('/totalExpense');
           }),
-          _buildOverviewCard(context, 'Hàng Tháng', '5000000', Colors.black, Icons.account_balance, () {
+          _buildOverviewCard(context, 'Hàng Tháng', (totalIncome - totalExpense).toString(), Colors.black, Icons.account_balance, () {
             context.push('/totalMonthly');
           }),
         ],
