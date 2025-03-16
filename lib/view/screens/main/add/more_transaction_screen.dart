@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../../utils/format_utils.dart';
+import '../../../../utils/getUserId.dart';
 
 class MoreTransactionScreen extends StatefulWidget {
   const MoreTransactionScreen({super.key});
@@ -23,35 +24,41 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
     fetchData();
   }
 
-  Future<void> fetchData({bool isNextPage = false}) async {
+  String? userId = getCurrentUserId();
+
+  Future<void> fetchData({bool isNextPage = false,}) async {
     if (isLoading || !hasMoreData) return;
     setState(() => isLoading = true);
 
-    Query query = FirebaseFirestore.instance
-        .collection('transactions')
-        .orderBy('date', descending: true)
-        .limit(itemsPerPage);
-
-    if (isNextPage && lastDocument != null) {
-      query = query.startAfterDocument(lastDocument!);
-    }
-
     try {
+      Query query = FirebaseFirestore.instance
+          .collection('transactions')
+          .where('userId', isEqualTo: userId)
+          .orderBy('date', descending: true)
+          .limit(itemsPerPage);
+
+      if (isNextPage && lastDocument != null) {
+        query = query.startAfterDocument(lastDocument!);
+      }
+
       QuerySnapshot querySnapshot = await query.get();
-      if (querySnapshot.docs.isNotEmpty) {
-        setState(() {
-          if (!isNextPage) items.clear();
+
+      setState(() {
+        if (!isNextPage) items.clear();
+
+        if (querySnapshot.docs.isNotEmpty) {
           items.addAll(querySnapshot.docs);
           lastDocument = querySnapshot.docs.last;
           hasMoreData = querySnapshot.docs.length == itemsPerPage;
-        });
-      } else {
-        setState(() => hasMoreData = false);
-      }
+        } else {
+          hasMoreData = false;
+        }
+      });
     } catch (e) {
-      print('Lỗi khi tải dữ liệu: $e');
+      print('❌ Lỗi khi tải dữ liệu: $e');
+    } finally {
+      setState(() => isLoading = false);
     }
-    setState(() => isLoading = false);
   }
 
   void nextPage() {

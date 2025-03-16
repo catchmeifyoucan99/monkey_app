@@ -17,6 +17,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import '../../../../utils/format_utils.dart';
+import '../../../../utils/getUserId.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -277,10 +278,14 @@ class _AddScreenState extends State<AddScreen> {
     _loadTransactions();
   }
 
+  String? userId = getCurrentUserId();
+
   Future<void> _loadTransactions() async {
     try {
+
       final QuerySnapshot snapshot = await _firestore
           .collection('transactions')
+          .where('userId', isEqualTo: userId)
           .orderBy('date', descending: true)
           .limit(7)
           .get();
