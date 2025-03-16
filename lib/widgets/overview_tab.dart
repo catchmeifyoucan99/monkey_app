@@ -1,9 +1,12 @@
+import 'package:expense_personal/utils/getUserId.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class OverviewTab extends StatelessWidget {
   final TabController tabController;
-  const OverviewTab({super.key, required this.tabController});
+
+  OverviewTab({super.key, required this.tabController});
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +76,9 @@ class OverviewTab extends StatelessWidget {
             child: TabBarView(
               controller: tabController,
               children: [
-                _buildTabContent(_savingData, Colors.teal),
-                _buildTabContent(_remindData, Colors.orange),
-                _buildTabContent(_budgetData, Colors.purple),
+                _buildTabContent('saving', Colors.blue),
+                _buildTabContent('income', Colors.green),
+                _buildTabContent('expense', Colors.red),
               ],
             ),
           ),
@@ -84,45 +87,74 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildTabContent(List<Map<String, dynamic>> transactions, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: transactions.isEmpty
-          ? Center(child: Text('Chưa có dữ liệu', style: TextStyle(fontSize: 16, color: color)))
-          : ListView.builder(
-        itemCount: transactions.length,
-        itemBuilder: (context, index) {
-          var transaction = transactions[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            elevation: 1,
-            color: Color(0xFFF6F6F6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: ListTile(
-              leading: Icon(transaction['type'] == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
-                  color: transaction['type'] == 'income' ? Colors.green : Colors.red),
-              title: Text(transaction['description'], style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(DateFormat('dd/MM/yyyy').format(transaction['date']), style: const TextStyle(color: Colors.grey)),
-              trailing: Text(
-                "${NumberFormat("#,##0").format(transaction['amount'])} VND",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: transaction['type'] == 'income' ? Colors.green : Colors.red),
-              ),
-            ),
-          );
-        },
-      ),
+  Widget _buildTabContent(String type, Color color) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _getTransactionsStream(type),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('Chưa có dữ liệu', style: TextStyle(fontSize: 16, color: color)));
+        }
+
+        final transactions = snapshot.data!.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return {
+            'description': data['title'] ?? "Không có tiêu đề",
+            'amount': data['amount'] ?? 0,
+            'type': data['type'] ?? "Không rõ loại",
+            'date': DateTime.parse(data['date'] ?? DateTime.now().toString()),
+          };
+        }).toList();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ListView.builder(
+            itemCount: transactions.length,
+            itemBuilder: (context, index) {
+              var transaction = transactions[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                elevation: 1,
+                color: const Color(0xFFF6F6F6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: Icon(
+                    transaction['type'] == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
+                    color: transaction['type'] == 'income' ? Colors.green : Colors.red,
+                  ),
+                  title: Text(transaction['description'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(DateFormat('dd/MM/yyyy').format(transaction['date']), style: const TextStyle(color: Colors.grey)),
+                  trailing: Text(
+                    "${NumberFormat("#,##0").format(transaction['amount'])} VND",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: transaction['type'] == 'income' ? Colors.green : Colors.red),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+
+      },
     );
   }
 
-  static final List<Map<String, dynamic>> _savingData = [
-    {"description": "Tiết kiệm tháng 7", "amount": 2000000, "type": "income", "date": DateTime(2024, 7, 10)},
-  ];
+  String? userId = getCurrentUserId();
 
-  static final List<Map<String, dynamic>> _remindData = [
-    {"description": "Hóa đơn điện", "amount": 500000, "type": "expense", "date": DateTime(2024, 7, 5)},
-  ];
+  Stream<QuerySnapshot> _getTransactionsStream(String type) {
+    final startOfDay = DateTime.now().subtract(Duration(days: 30));
+    final endOfDay = DateTime.now();
 
-  static final List<Map<String, dynamic>> _budgetData = [
-    {"description": "Ngân sách ăn uống", "amount": 3000000, "type": "expense", "date": DateTime(2024, 7, 1)},
-  ];
+    return FirebaseFirestore.instance
+        .collection('transactions')
+        .where('userId', isEqualTo: userId)
+        .where('type', isEqualTo: type)
+        .where('date', isGreaterThanOrEqualTo: startOfDay.toIso8601String())
+        .where('date', isLessThan: endOfDay.toIso8601String())
+        .orderBy('date', descending: true)
+        .snapshots();
+  }
+
 }
