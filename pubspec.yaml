@@ -59,6 +59,10 @@ dependencies:
   fake_cloud_firestore: ^3.1.0
   firebase_core_platform_interface: 5.4.0
   build_runner: 2.4.15
+  flutter_image_compress: ^2.4.0
+  path: ^1.9.0
+  mime: ^2.0.0
+  http_parser: ^4.1.2
 
 dev_dependencies:
   mockito: ^5.0.0

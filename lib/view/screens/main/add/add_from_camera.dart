@@ -7,6 +7,9 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -34,10 +37,57 @@ class _CameraScreenState extends State<CameraScreen> {
         // _extractText(pickedFile.path);
         // sendDataToN8N({"image": _image});
         // sendImageToHuggingFace(_image);
-        getImageTotext(_image?.path);
+        // getImageTotext(_image?.path);
+        // sendToOllama(_image);
+        sendToN8n(File(pickedFile.path));
       }
     });
   }
+
+  Future<void> sendToN8n(File imageFile) async {
+    String url = "http://192.168.0.106:5678/webhook-test/receipt_reader"; // Update with your webhook URL
+
+    var request = http.MultipartRequest('POST', Uri.parse(url));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file', // Key name for n8n webhook
+        imageFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    );
+
+    try {
+      var response = await request.send();
+      var responseText = await response.stream.bytesToString();
+      setState(() {
+        _extractedText = responseText;
+      });
+
+      print("Extracted Text: $_extractedText");
+
+      // if (response.statusCode == 200) {
+      //   // Convert response to string
+      //   var responseBody = await response.stream.bytesToString();
+      //   var jsonResponse = jsonDecode(responseBody);
+      //
+      //   // Extract data
+      //   String extractedText = jsonResponse["text"];
+      //
+      //   // Display in UI
+      //   setState(() {
+      //     _extractedText = extractedText;
+      //   });
+      //
+      //   print("Extracted Text: $_extractedText");
+      // } else {
+      //   print("Error: ${response.statusCode}");
+      // }
+    } catch (e) {
+      print("Request failed: $e");
+    }
+  }
+
+  String _extractedText = "Waiting for response...";
 
   Future getImageTotext(final imagePath) async {
     final textRecognizer = TextRecognizer();
@@ -107,50 +157,97 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    initCamera();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   initCamera();
+  // }
 
-  Future<void> initCamera() async {
-    _cameras = await availableCameras();
-    if (_cameras!.isNotEmpty) {
-      _cameraController =
-          CameraController(_cameras![0], ResolutionPreset.medium);
-      await _cameraController!.initialize();
-      setState(() {});
+  Future<void> sendToOllama(image) async {
+    if (image == null) {
+      print("image is null");
+      return;
+    };
+
+    // Compress image (optional, to reduce size)
+    List<int> imageBytes = await image!.readAsBytes();
+    String base64Image = base64Encode(imageBytes);
+
+    // Ollama API URL (adjust if using a remote server)
+    String url = 'http://127.0.0.1:11434/api/generate';
+
+    // Request body
+    Map<String, dynamic> body = {
+      "model": "llava:7b", // Use an image-capable model like `llava`
+      "prompt": "Describe this image",
+      "images": [base64Image]
+    };
+
+    try {
+      var response = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        print("Ollama Response: ${jsonResponse['response']}");
+      } else {
+        print("ERROR: ${response.body}");
+      }
+    } catch (e) {
+      print("Exception: $e");
     }
   }
 
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
-  }
+
+  // Future<void> initCamera() async {
+  //   _cameras = await availableCameras();
+  //   if (_cameras!.isNotEmpty) {
+  //     _cameraController =
+  //         CameraController(_cameras![0], ResolutionPreset.medium);
+  //     await _cameraController!.initialize();
+  //     setState(() {});
+  //   }
+  // }
+  //
+  // @override
+  // void dispose() {
+  //   _cameraController?.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Chụp Hình")),
-      body: Column(
-        children: [
-          Expanded(
-            child: _cameraController != null &&
-                    _cameraController!.value.isInitialized
-                ? CameraPreview(_cameraController!)
-                : Center(child: CircularProgressIndicator()),
-          ),
-          ElevatedButton(
-            onPressed: getImageFromCamera,
-            child: Text("Chụp Hình"),
-          ),
-          if (_image != null) ...[
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Expanded(
+            //   child: _cameraController != null &&
+            //           _cameraController!.value.isInitialized
+            //       ? CameraPreview(_cameraController!)
+            //       : Center(child: CircularProgressIndicator()),
+            // ),
+            ElevatedButton(
+              onPressed: getImageFromCamera,
+              child: Text("Chụp Hình"),
+            ),
             SizedBox(height: 10),
-            Text("Ảnh đã chụp:"),
-            Image.file(File(_image!.path), height: 200),
+            // if (_image != null) ...[
+            //   SizedBox(height: 10),
+            //   Text("Ảnh đã chụp:"),
+            //   Image.file(File(_image!.path), height: 200),
+            // ],
+            _image != null ?
+            Image.file(_image!, height: 200) :
+            Text('No image selected'),
+            SizedBox(height: 10),
+            Text(_extractedText, style: TextStyle(fontSize: 16)),
           ],
-        ],
+        ),
       ),
     );
   }
