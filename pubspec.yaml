@@ -37,7 +37,7 @@ dependencies:
   shared_preferences: ^2.5.1
   fl_chart: ^0.70.2
   intl: ^0.20.2
-  firebase_core: 3.11.0
+  firebase_core: 3.12.1
   cloud_firestore: 5.6.3
   firebase_auth: ^5.4.2
   google_sign_in: ^6.2.2
@@ -59,10 +59,7 @@ dependencies:
   fake_cloud_firestore: ^3.1.0
   firebase_core_platform_interface: 5.4.0
   build_runner: 2.4.15
-  flutter_image_compress: ^2.4.0
-  path: ^1.9.0
-  mime: ^2.0.0
-  http_parser: ^4.1.2
+  mocktail: ^0.3.0
 
 dev_dependencies:
   mockito: ^5.0.0

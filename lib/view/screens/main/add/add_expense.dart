@@ -14,16 +14,47 @@ class AddExpenseScreen extends StatefulWidget {
 }
 
 
-Future<void> addExpense(String title, double amount, String category, DateTime date) async {
-  try {
-    String? userId = getCurrentUserId();
+// Future<void> addExpense(String title, double amount, String category, DateTime date) async {
+//   try {
+//     String? userId = getCurrentUserId();
+//
+//     if (userId == null) {
+//       print('Không tìm thấy người dùng');
+//       return;
+//     }
+//
+//     await FirebaseFirestore.instance.collection('transactions').add({
+//       'title': title,
+//       'amount': amount,
+//       'category': category,
+//       'date': date.toIso8601String(),
+//       'type': 'expense',
+//       'createdAt': FieldValue.serverTimestamp(),
+//       'userId': userId,
+//     });
+//     print('Chi tiêu đã được lưu!');
+//   } catch (e) {
+//     print('Lỗi khi lưu chi tiêu: $e');
+//   }
+// }
 
+// Thêm 2 tham số FirebaseFirestore và FirebaseAuth
+Future<void> addExpense(
+    String title,
+    double amount,
+    String category,
+    DateTime date,
+    FirebaseFirestore firestore,
+    FirebaseAuth auth,
+    ) async {
+  try {
+    final userId = auth.currentUser?.uid;
     if (userId == null) {
       print('Không tìm thấy người dùng');
       return;
     }
 
-    await FirebaseFirestore.instance.collection('transactions').add({
+    await firestore.collection('transactions').add({
       'title': title,
       'amount': amount,
       'category': category,
@@ -75,6 +106,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         amount,
         _selectedCategory!,
         selectedDate,
+        FirebaseFirestore.instance,
+        FirebaseAuth.instance,
       );
 
       titleController.clear();
@@ -133,6 +166,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 18),
