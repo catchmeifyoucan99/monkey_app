@@ -1,5 +1,5 @@
-import 'package:expense_personal/model/saving.dart';
-import 'package:expense_personal/services/saving_service.dart';
+import 'package:expense_personal/cores/model/saving.dart';
+import 'package:expense_personal/cores/services/saving_service.dart';
 import 'package:flutter/material.dart';
 
 class SavingScreen extends StatefulWidget {

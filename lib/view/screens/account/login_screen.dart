@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:expense_personal/widgets/custom_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:expense_personal/widgets/input_decoration.dart';
-import '../../../providers/auth_provider.dart';
+import '../../../cores/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {

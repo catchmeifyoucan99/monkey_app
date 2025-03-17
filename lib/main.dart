@@ -1,4 +1,3 @@
-import 'package:expense_personal/providers/auth_provider.dart';
 import 'package:expense_personal/view/screens/account/login_screen.dart';
 import 'package:expense_personal/view/screens/account/register_screen.dart';
 import 'package:expense_personal/view/screens/main/add/add_expense.dart';
@@ -16,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'cores/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

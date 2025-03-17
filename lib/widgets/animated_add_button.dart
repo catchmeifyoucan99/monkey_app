@@ -1,18 +1,19 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expense_personal/cores/interfaces/CategoryRepository.dart';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 
-import '../utils/getUserId.dart';
+import '../cores/utils/getUserId.dart';
 import 'trash_bin.dart';
 
 class AnimatedAddButton extends StatefulWidget {
   final ValueChanged<String?> onCategorySelected;
   final String type;
+  final CategoryRepository categoryRepository;
 
   const AnimatedAddButton({
     super.key,
     required this.onCategorySelected,
-    required this.type,
+    required this.type, required this.categoryRepository,
   });
 
   @override
@@ -39,12 +40,9 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
 
   Future<void> _loadCategories() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('${widget.type}_categories')
-          .where('userId', isEqualTo: userId)
-          .get();
+      final loadCategories = await widget.categoryRepository.loadCategories(userId!, widget.type);
       setState(() {
-        _categories.addAll(snapshot.docs.map((doc) => doc['name'] as String));
+        _categories.addAll(loadCategories);
       });
     } catch (e) {
       print('Lỗi khi tải danh mục: $e');
@@ -53,13 +51,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
 
   Future<void> _addCategory(String name) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('${widget.type}_categories')
-          .add({
-        'name': name,
-        'type': widget.type,
-        'userId': userId,
-      });
+      await widget.categoryRepository.addCategory(name, userId!, widget.type);
       setState(() {
         _categories.add(name);
       });
@@ -70,16 +62,8 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
 
   Future<void> _deleteCategory(String categoryName, String type) async {
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('${type}_categories')
-          .where('userId', isEqualTo: userId)
-          .get();
-
-      for(final doc in querySnapshot.docs) {
-        await doc.reference.delete();
-      }
-
-      print('Danh mục đã được xóa: $categoryName');
+      await widget.categoryRepository.deleteCategory(categoryName, userId!, widget.type);
+      _categories.remove(categoryName);
     } catch (e) {
       print('Lỗi khi xóa danh mục: $e');
     }
@@ -208,12 +192,12 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
         ),
         if (_showTrash)
           TrashBin(
-            onAccept: (data) async {
+            onAccept: (selectedCategory) async {
 
-              await _deleteCategory(data, widget.type);
-              
+              await _deleteCategory(selectedCategory, widget.type);
+
               setState(() {
-                _categories.remove(data);
+                _categories.remove(selectedCategory);
                 _showTrash = false;
               });
             }, type: widget.type,

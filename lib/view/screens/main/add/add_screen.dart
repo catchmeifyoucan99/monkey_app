@@ -16,8 +16,8 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
-import '../../../../utils/format_utils.dart';
-import '../../../../utils/getUserId.dart';
+import '../../../../cores/utils/format_utils.dart';
+import '../../../../cores/utils/getUserId.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
