@@ -53,7 +53,7 @@ void main() {
     verify(mockAuthProvider.login('test@example.com', 'password123')).called(1);
   });
 
-  testWidgets('Hiển thị lỗi khi đăng nhập thất bại', (WidgetTester tester) async {
+  testWidgets('Login failure', (WidgetTester tester) async {
     when(mockAuthProvider.login(any, any)).thenAnswer((_) async => false);
 
     await tester.pumpWidget(createWidgetUnderTest());
@@ -63,5 +63,29 @@ void main() {
     await tester.pump();
 
     expect(find.text('Sai tài khoản hoặc mật khẩu!'), findsOneWidget);
+  });
+
+  testWidgets('Login fail', (WidgetTester tester) async {
+    when(mockAuthProvider.login(any, any)).thenAnswer((_) async => false);
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.enterText(find.byType(TextField).at(0), ' ');
+    await tester.enterText(find.byType(TextField).at(1), 'wrongpassword');
+    await tester.tap(find.text('Đăng nhập'));
+    await tester.pump();
+
+    verifyNever(mockAuthProvider.login(' ', 'wrongpassword')).called(0);
+  });
+
+  testWidgets('Login fail', (WidgetTester tester) async {
+    when(mockAuthProvider.login(any, any)).thenAnswer((_) async => false);
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.enterText(find.byType(TextField).at(0), 'wrong@example.com');
+    await tester.enterText(find.byType(TextField).at(1), ' ');
+    await tester.tap(find.text('Đăng nhập'));
+    await tester.pump();
+
+    verifyNever(mockAuthProvider.login('wrong@example.com', '')).called(0);
   });
 }

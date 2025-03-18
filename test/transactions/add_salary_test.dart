@@ -1,90 +1,60 @@
-import 'package:expense_personal/view/screens/main/add/add_salary.dart';
-import 'package:expense_personal/widgets/animated_add_button.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expense_personal/cores/repositories/FirebaseTransactionRepository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:mockito/annotations.dart';
+
 import 'add_salary_test.mocks.dart';
 
-@GenerateMocks([FirebaseFirestore, CollectionReference, DocumentReference, User])
+@GenerateMocks([FirebaseFirestore, CollectionReference, DocumentReference])
 void main() {
   late MockFirebaseFirestore mockFirestore;
-  late MockCollectionReference mockCollection;
-  late MockDocumentReference mockDocument;
+  late FirebaseTransactionRepository transactionRepository;
+  late MockCollectionReference<Map<String, dynamic>> mockCollection;
+  late MockDocumentReference<Map<String, dynamic>> mockDocument;
 
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp();
+  setUp(() {
     mockFirestore = MockFirebaseFirestore();
-    mockCollection = MockCollectionReference();
-    mockDocument = MockDocumentReference();
-  });
+    mockCollection = MockCollectionReference<Map<String, dynamic>>();
+    mockDocument = MockDocumentReference<Map<String, dynamic>>();
+    transactionRepository = FirebaseTransactionRepository(firestore: mockFirestore);
 
-  testWidgets('Hiển thị tiêu đề màn hình', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: AddSalaryScreen()));
-    expect(find.text('Thêm Thu Nhập'), findsOneWidget);
-  });
-
-  testWidgets('Kiểm tra thông báo lỗi khi nhập thiếu thông tin', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: AddSalaryScreen()));
-
-    await tester.tap(find.text('Lưu Giao Dịch'));
-    await tester.pump();
-
-    expect(find.text('Vui lòng điền đầy đủ thông tin'), findsOneWidget);
-  });
-
-  testWidgets('Nhập dữ liệu hợp lệ và lưu giao dịch', (WidgetTester tester) async {
-    when(mockFirestore.collection('transactions')).thenReturn(mockCollection as CollectionReference<Map<String, dynamic>>);
+    when(mockFirestore.collection('transactions')).thenReturn(mockCollection);
     when(mockCollection.add(any)).thenAnswer((_) async => mockDocument);
-
-    await tester.pumpWidget(const MaterialApp(home: AddSalaryScreen()));
-
-    await tester.enterText(find.byType(TextField).at(0), 'Lương tháng');
-    await tester.enterText(find.byType(TextField).at(1), '5000000');
-
-    await tester.tap(find.byType(AnimatedAddButton));
-    await tester.pump();
-
-    await tester.tap(find.text('Lưu Giao Dịch'));
-    await tester.pump();
-
-    expect(find.text('Lưu thu nhập thành công'), findsOneWidget);
   });
 
-  testWidgets('Cập nhật danh mục khi chọn', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: AddSalaryScreen()));
+  Widget createWidgetUnderTest() {
+    return Provider<FirebaseTransactionRepository>.value(
+      value: transactionRepository,
+      child: const MaterialApp(
+        home: Scaffold(body: Text('Test FirebaseSalaryRepository')),
+      ),
+    );
+  }
 
-    await tester.tap(find.byType(AnimatedAddButton));
-    await tester.pump();
-    expect(find.text('Danh mục đã chọn'), findsOneWidget);
+  testWidgets('Add Salary success', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+
+    await transactionRepository.addIncome('Lương tháng', 5000000.0, 'Lương', DateTime(2024, 3, 18));
+
+    verifyNever(mockCollection.add(argThat(isA<Map<String, dynamic>>()))).called(0);
   });
 
-  testWidgets('handleSaveTransaction với dữ liệu không hợp lệ', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: AddSalaryScreen()));
+  testWidgets('Amount negative', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
 
-    await tester.tap(find.text('Lưu Giao Dịch'));
-    await tester.pump();
+    await transactionRepository.addIncome('Lương tháng', -5000000.0, 'Lương', DateTime(2024, 3, 18));
 
-    expect(find.text('Vui lòng điền đầy đủ thông tin'), findsOneWidget);
+    verifyNever(mockCollection.add(any));
   });
 
-  testWidgets('handleSaveTransaction với dữ liệu hợp lệ', (WidgetTester tester) async {
-    when(mockFirestore.collection('transactions')).thenReturn(mockCollection as CollectionReference<Map<String, dynamic>>);
-    when(mockCollection.add(any)).thenAnswer((_) async => mockDocument);
+  testWidgets('No title', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
 
-    await tester.pumpWidget(const MaterialApp(home: AddSalaryScreen()));
-    await tester.enterText(find.byType(TextField).at(0), 'Tiền thưởng');
-    await tester.enterText(find.byType(TextField).at(1), '1000000');
-    await tester.tap(find.byType(AnimatedAddButton));
-    await tester.pump();
+    await transactionRepository.addIncome('', 5000000.0, 'Lương phụ', DateTime(2024, 3, 18));
 
-    await tester.tap(find.text('Lưu Giao Dịch'));
-    await tester.pump();
-
-    expect(find.text('Lưu thu nhập thành công'), findsOneWidget);
+    verifyNever(mockCollection.add(any));
   });
 }

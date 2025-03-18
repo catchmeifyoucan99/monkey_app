@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_personal/view/screens/account/login_screen.dart';
 import 'package:expense_personal/view/screens/account/register_screen.dart';
 import 'package:expense_personal/view/screens/main/add/add_expense.dart';
@@ -16,6 +17,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'cores/providers/auth_provider.dart';
+import 'cores/repositories/FirebaseTransactionRepository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,11 +109,15 @@ class MyApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/addSalary',
-          builder: (context, state) => const AddSalaryScreen(),
+          builder: (context, state) => AddSalaryScreen(
+            transactionRepository: FirebaseTransactionRepository(firestore: FirebaseFirestore.instance),
+          ),
         ),
         GoRoute(
           path: '/addExpense',
-          builder: (context, state) => const AddExpenseScreen(),
+          builder: (context, state) => AddExpenseScreen(
+            transactionRepository: FirebaseTransactionRepository(firestore: FirebaseFirestore.instance),
+          ),
         ),
         GoRoute(
           path: '/addCamera',
