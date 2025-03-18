@@ -1,40 +1,30 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 
-class CameraScreen extends StatefulWidget {
-  final ImagePicker? imagePicker;
-  const CameraScreen({super.key, this.imagePicker});
 
-  @override
-  _CameraScreenState createState() => _CameraScreenState();
-}
-
-class _CameraScreenState extends State<CameraScreen> {
-  File? _image;
-  File get image => _image!;
-  String _extractedText = "Waiting for response...";
-  String get extractedText => _extractedText;
-  ImagePicker get picker => widget.imagePicker ?? ImagePicker();
+class ImageCapture {
+  File? image;
+  final picker = ImagePicker();
+  String extractedText = "Waiting for response...";
 
   Future getImageFromCamera() async {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
-    setState(() {
-      if (pickedFile != null) {
-        _extractedText = "Waiting for response...";
-        _image = File(pickedFile.path);
-        sendToN8n(File(pickedFile.path));
-      }
-    });
+    if (pickedFile != null) {
+      image = File(pickedFile.path);
+      sendToN8n(File(pickedFile.path));
+    }
   }
 
   Future<void> sendToN8n(File imageFile) async {
-    String url =
-        "https://9749-14-161-49-158.ngrok-free.app/webhook/receipt_reader";
+    String url = "http://192.168.0.106:5678/webhook-test/receipt_reader";
     var request = http.MultipartRequest('POST', Uri.parse(url));
     request.files.add(
       await http.MultipartFile.fromPath(
@@ -46,21 +36,20 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       var response = await request.send();
       var responseText = await response.stream.bytesToString();
-      setState(() {
-        _extractedText = responseText;
-      });
-      // print("Extracted Text: $_extractedText");
+      extractedText = responseText;
+      print("Extracted Text: $extractedText");
       askGroq(responseText);
     } catch (e) {
       print("Request failed: $e");
-      _extractedText = "Request failed!";
     }
   }
 
   Future<void> askGroq(final text) async {
     // String base64Image = await encodeImage(image);
     final url = Uri.parse("https://api.groq.com/openai/v1/chat/completions");
-    final apiKey = "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";
+    final apiKey =
+        "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"; // Replace with your Groq API Key
+
     final response = await http.post(
       url,
       headers: {
@@ -78,7 +67,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 "type": "text",
                 "text": "This is a text extract from the image: " +
                     text +
-                    ". Return a json respond with date, total amount spent in VND."
+                    ". Return a json respond with date, total and each item's price."
               },
             ]
           }
@@ -92,28 +81,5 @@ class _CameraScreenState extends State<CameraScreen> {
     } else {
       print("Error: ${response.statusCode} - ${response.body}");
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Chụp Hình")),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            ElevatedButton(
-              onPressed: getImageFromCamera,
-              child: Text("Chụp Hình"),
-            ),
-            SizedBox(height: 10),
-            _image != null
-                ? Image.file(_image!, height: 200)
-                : Text('No image selected'),
-            SizedBox(height: 10),
-            Text(_extractedText, style: TextStyle(fontSize: 16)),
-          ],
-        ),
-      ),
-    );
   }
 }
