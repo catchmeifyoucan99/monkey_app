@@ -38,3 +38,45 @@ String formatDateV2(DateTime date) {
 
   return '${date.day} ${months[date.month - 1]} ${date.year}';
 }
+
+String formatCurrency(double amount, String currencyCode) {
+  final formatCurrency = NumberFormat.currency(
+    locale: _getLocale(currencyCode),
+    symbol: _getSymbol(currencyCode),
+  );
+  return formatCurrency.format(amount);
+}
+
+String _getLocale(String currencyCode) {
+  switch (currencyCode) {
+    case 'VND':
+      return 'vi_VN';
+    case 'USD':
+      return 'en_US';
+    case 'EUR':
+      return 'de_DE';
+    case 'GBP':
+      return 'en_GB';
+    case 'JPY':
+      return 'ja_JP';
+    default:
+      return 'en_US';
+  }
+}
+
+String _getSymbol(String currencyCode) {
+  switch (currencyCode) {
+    case 'VND':
+      return '₫';
+    case 'USD':
+      return '\$';
+    case 'EUR':
+      return '€';
+    case 'GBP':
+      return '£';
+    case 'JPY':
+      return '¥';
+    default:
+      return '\$';
+  }
+}

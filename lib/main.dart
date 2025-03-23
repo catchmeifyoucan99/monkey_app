@@ -17,6 +17,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'cores/providers/auth_provider.dart';
+import 'cores/providers/currency_provider.dart';
 import 'cores/repositories/FirebaseTransactionRepository.dart';
 
 void main() async {
@@ -27,6 +28,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CurrencyProvider()),
       ],
       child: const MyApp(),
     ),

@@ -1,4 +1,9 @@
+import 'package:expense_personal/cores/providers/currency_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../cores/utils/format_utils.dart';
+
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -13,9 +18,12 @@ class _SettingScreenState extends State<SettingScreen> {
   String _selectedLanguage = 'Tiếng Việt';
 
   final List<String> _languages = ['Tiếng Việt', 'English', '中文', 'Español'];
+  final List<String> _currencies = ['VND', 'USD', 'EUR', 'GBP', 'JPY'];
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cài đặt'),
@@ -51,7 +59,6 @@ class _SettingScreenState extends State<SettingScreen> {
                   setState(() {
                     _isDarkModeEnabled = value;
                   });
-                  // Thay đổi chủ đề ứng dụng (cần tích hợp với ThemeProvider hoặc tương tự)
                 },
               ),
             ),
@@ -74,6 +81,36 @@ class _SettingScreenState extends State<SettingScreen> {
                     child: Text(language),
                   );
                 }).toList(),
+              ),
+            ),
+            const Divider(),
+
+            // Cài đặt tiền tệ
+            _buildSettingItem(
+              title: 'Tiền tệ',
+              subtitle: 'Chọn loại tiền tệ hiển thị',
+              trailing: DropdownButton<String>(
+                value: currencyProvider.currency,
+                onChanged: (value) {
+                  setState(() {
+                    currencyProvider.setCurrency(value!);
+                  });
+                },
+                items: _currencies.map((currency) {
+                  return DropdownMenuItem(
+                    value: currency,
+                    child: Text(currency),
+                  );
+                }).toList(),
+              ),
+            ),
+            const Divider(),
+
+            // Hiển thị ví dụ định dạng tiền tệ
+            Center(
+              child: Text(
+                'Ví dụ: ${formatCurrency(1234567.89, currencyProvider.currency)}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             const Divider(),
