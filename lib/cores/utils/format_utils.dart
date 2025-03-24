@@ -40,11 +40,12 @@ String formatDateV2(DateTime date) {
 }
 
 String formatCurrency(double amount, String currencyCode) {
-  final formatCurrency = NumberFormat.currency(
+  final format = NumberFormat.currency(
     locale: _getLocale(currencyCode),
     symbol: _getSymbol(currencyCode),
+    decimalDigits: currencyCode == 'VND' ? 0 : 2,
   );
-  return formatCurrency.format(amount);
+  return format.format(amount);
 }
 
 String _getLocale(String currencyCode) {
