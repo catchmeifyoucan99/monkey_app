@@ -15,7 +15,7 @@ InputDecoration customInputDecoration(String label, IconData icon, {Widget? suff
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(
-        color: Color(0xFF37ABFF),
+        color: Colors.teal,
         width: 2,
       ),
     ),
