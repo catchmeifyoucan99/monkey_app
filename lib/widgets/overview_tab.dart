@@ -31,9 +31,9 @@ class OverviewTab extends StatelessWidget {
           TabBar(
             controller: tabController,
             tabs: const [
-              Tab(text: 'Saving'),
               Tab(text: 'Income'),
               Tab(text: 'Expense'),
+              Tab(text: 'Saving'),
             ],
             labelColor: Colors.white,
             unselectedLabelColor: Colors.black,
@@ -86,9 +86,9 @@ class OverviewTab extends StatelessWidget {
             child: TabBarView(
               controller: tabController,
               children: [
-                _buildTabContent('saving', Colors.blue, currencyProvider, dateFormat),
                 _buildTabContent('income', Colors.green, currencyProvider, dateFormat),
                 _buildTabContent('expense', Colors.red, currencyProvider, dateFormat),
+                _buildTabContent('saving', Colors.blue, currencyProvider, dateFormat),
               ],
             ),
           ),

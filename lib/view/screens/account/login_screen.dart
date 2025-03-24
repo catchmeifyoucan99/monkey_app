@@ -128,7 +128,7 @@ class _LoginScreen extends State<LoginScreen> {
             // Login button
             CustomButton(
               label: 'Đăng nhập',
-              backgroundColor: const Color(0xFF0E33F3),
+              backgroundColor: Colors.teal,
               onPressed: login,
               borderRadius: 12.0,
               color: Colors.white,

@@ -168,7 +168,7 @@ class _RegisterScreen extends State<RegisterScreen> {
             CustomButton(
               key: Key('registerButton'),
               label: 'Đăng ký',
-              backgroundColor: const Color(0xFF0E33F3),
+              backgroundColor: Colors.teal,
               onPressed: register,
               borderRadius: 12.0,
               color: Colors.white,
