@@ -1,23 +1,16 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-// import 'package:ocr_scan_text/ocr_scan_text.dart';
-// import 'package:ocr_scan_text_example/scan_all_module.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:dotted_border/dotted_border.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:provider/provider.dart';
 import '../../../../cores/utils/format_utils.dart';
 import '../../../../cores/utils/getUserId.dart';
+import '../../../../cores/providers/currency_provider.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -36,242 +29,6 @@ class _AddScreenState extends State<AddScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isLoading = true;
 
-  Future<void> sendDataToN8N(Map<String, dynamic> data) async {
-    final url = Uri.parse(
-        "http://localhost:5678/webhook-test/af76d4e3-4705-4985-a850-e7065ac9d6df");
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(data),
-      );
-
-      if (response.statusCode == 200) {
-        print("Data sent successfully: ${response.body}");
-      } else {
-        print("Error: ${response.statusCode}, ${response.body}");
-      }
-    } catch (e) {
-      print("Exception: $e");
-    }
-  }
-
-  File _image = File("");
-  final picker = ImagePicker();
-  Future getImageFromGallery() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    setState(() {
-      if (pickedFile != null) {
-        _image = File(pickedFile.path);
-      }
-    });
-  }
-
-  Future getImageFromCamera() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-    // await copyTessData();
-    // await checkTessDataFiles();
-    // await loadTessConfig();
-    setState(() {
-      if (pickedFile != null) {
-        _image = File(pickedFile.path);
-        // _extractText(pickedFile.path);
-        // sendDataToN8N({"image": _image});
-        // sendImageToHuggingFace(_image);
-        getImageTotext(_image.path);
-      }
-    });
-  }
-
-  Future<void> copyTessData() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final tessdataPath = '${directory.path}/tessdata';
-    final tessdataDir = Directory(tessdataPath);
-
-    if (!await tessdataDir.exists()) {
-      await tessdataDir.create(recursive: true);
-    }
-
-    final trainedDataFiles = ['eng.traineddata', 'tha.traineddata'];
-
-    for (final fileName in trainedDataFiles) {
-      final assetPath = 'assets/tessdata/$fileName';
-      final filePath = '$tessdataPath/$fileName';
-
-      final file = File(filePath);
-      if (!(await file.exists())) {
-        final ByteData data = await rootBundle.load(assetPath);
-        final List<int> bytes = data.buffer.asUint8List();
-        await file.writeAsBytes(bytes);
-        print("✅ Copied $fileName to $tessdataPath");
-      } else {
-        print("⚠️ $fileName already exists in $tessdataPath");
-      }
-    }
-  }
-
-  Future<Map<String, dynamic>> loadTessConfig() async {
-    try {
-      String configString =
-          await rootBundle.loadString('assets/tessdata_config.json');
-      final Map<String, dynamic> config = json.decode(configString);
-      print("Tesseract Config Loaded: $config");
-          return config;
-    } catch (e) {
-      print("Error loading tessdata_config.json: $e");
-      return {};
-    }
-  }
-
-  Future<void> checkTessDataFiles() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final tessdataPath = '${directory.path}/tessdata';
-
-    final engFile = File('$tessdataPath/eng.traineddata');
-    final thaFile = File('$tessdataPath/tha.traineddata');
-
-    print("Checking tessdata files...");
-
-    if (await engFile.exists()) {
-      print("✅ eng.traineddata exists at $tessdataPath");
-    } else {
-      print("❌ eng.traineddata is MISSING! Copy it manually.");
-    }
-
-    if (await thaFile.exists()) {
-      print("✅ tha.traineddata exists at $tessdataPath");
-    } else {
-      print("❌ tha.traineddata is MISSING! Copy it manually.");
-    }
-  }
-
-  Future<void> _extractText(String imagePath) async {
-    if (imagePath.isEmpty) {
-      print("Error: Image path is empty!");
-      return;
-    }
-    final directory = await getApplicationDocumentsDirectory();
-    final tessdataParent = directory.path;
-    String text = await FlutterTesseractOcr.extractText(
-      imagePath,
-      language: 'eng',
-      args: {
-        "tessdata": tessdataParent,
-      },
-    );
-    print("Text: $text");
-
-    // setState(() {
-    //   _ocrText = text;
-    // });
-  }
-
-  Future getImageTotext(final imagePath) async {
-    final textRecognizer = TextRecognizer();
-    try {
-      final RecognizedText recognizedText =
-          await textRecognizer.processImage(InputImage.fromFilePath(imagePath));
-      String text = formatTextWithSorting(recognizedText);
-      print("Text: $text");
-      askGroq(text);
-    } finally {
-      textRecognizer.close();
-    }
-  }
-
-  String formatTextWithSorting(RecognizedText recognizedText) {
-    List<TextLine> allLines = [];
-
-    for (TextBlock block in recognizedText.blocks) {
-      allLines.addAll(block.lines);
-    }
-
-    // Sort lines first by Y position, then by X position
-    allLines.sort((a, b) {
-      int dy = a.boundingBox.top.compareTo(b.boundingBox.top);
-      return (dy != 0) ? dy : a.boundingBox.left.compareTo(b.boundingBox.left);
-    });
-
-    return allLines.map((line) => line.text).join("\n");
-  }
-
-  String formatTextWithLineBreaks(RecognizedText recognizedText) {
-    List<String> formattedLines = [];
-
-    for (TextBlock block in recognizedText.blocks) {
-      for (TextLine line in block.lines) {
-        formattedLines.add(line.text);
-      }
-      formattedLines.add(""); // Add a blank line to separate blocks
-    }
-
-    return formattedLines.join("\n");
-  }
-
-  Future<void> askOllama(File image) async {
-    final url = Uri.parse("http://localhost:11434/api/generate");
-    List<int> imageBytes = await image.readAsBytes();
-    String base64Image = base64Encode(imageBytes);
-
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "model": "llama3.2-vision:11b",
-        "prompt": "Can you read the image and tell me how much i spent?"
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print("Ollama Response: ${data['response']}");
-    } else {
-      print("Error: ${response.statusCode}");
-    }
-  }
-
-  Future<void> askGroq(final text) async {
-    // String base64Image = await encodeImage(image);
-    final url = Uri.parse("https://api.groq.com/openai/v1/chat/completions");
-    final apiKey =
-        "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"; // Replace with your Groq API Key
-
-    final response = await http.post(
-      url,
-      headers: {
-        "Authorization": "Bearer $apiKey",
-        "Content-Type": "application/json"
-      },
-      body: jsonEncode({
-        "model": "llama-3.2-90b-vision-preview", // or "mixtral-8x7b"
-        "messages": [
-          {"role": "system", "content": "You are a helpful AI accountant."},
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a text extract from the image: " +
-                    text +
-                    ". Tell me how much I spent in VND currency."
-              },
-            ]
-          }
-        ]
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print("Groq Response: ${data['choices'][0]['message']['content']}");
-    } else {
-      print("Error: ${response.statusCode} - ${response.body}");
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -282,7 +39,6 @@ class _AddScreenState extends State<AddScreen> {
 
   Future<void> _loadTransactions() async {
     try {
-
       final QuerySnapshot snapshot = await _firestore
           .collection('transactions')
           .where('userId', isEqualTo: userId)
@@ -301,9 +57,7 @@ class _AddScreenState extends State<AddScreen> {
           return {
             'id': doc.id,
             'title': data['title'] ?? "Không có tiêu đề",
-            'amount': data['amount'] >= 0
-                ? '+${data['amount']}đ'
-                : '${data['amount']}đ',
+            'amount': data['amount'] ?? 0,
             'date': data['date'] ?? "Không có ngày",
             'type': data['type'] ?? "Không rõ loại",
             'category': data['category'] ?? "Không có danh mục",
@@ -321,6 +75,8 @@ class _AddScreenState extends State<AddScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -400,102 +156,107 @@ class _AddScreenState extends State<AddScreen> {
                     ),
                   ),
                   isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(),
-                        )
+                      ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
                       : Expanded(
-                          child: AnimatedOpacity(
-                            opacity: isLoading ? 0 : 1,
-                            duration: Duration(seconds: 1),
-                            child: ListView.builder(
-                              itemCount: transactions.length,
-                              itemBuilder: (context, index) {
-                                final transaction = transactions[index];
-                                return Dismissible(
-                                  key: Key(transaction['title']),
-                                  direction: DismissDirection.horizontal,
-                                  background: Container(
-                                    color: Colors.red,
-                                    alignment: Alignment.centerLeft,
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 20),
-                                    child:
-                                        Icon(Icons.delete, color: Colors.white),
-                                  ),
-                                  secondaryBackground: Container(
-                                    color: Colors.red,
-                                    alignment: Alignment.centerRight,
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 20),
-                                    child:
-                                        Icon(Icons.delete, color: Colors.white),
-                                  ),
-                                  onDismissed: (direction) async {
-                                    try {
-                                      final docId = transactions[index]['id'];
+                    child: AnimatedOpacity(
+                      opacity: isLoading ? 0 : 1,
+                      duration: const Duration(seconds: 1),
+                      child: ListView.builder(
+                        itemCount: transactions.length,
+                        itemBuilder: (context, index) {
+                          final transaction = transactions[index];
+                          final amount = transaction['amount'] as num;
+                          final convertedAmount = transaction['type'] == 'income'
+                              ? amount.toDouble()
+                              : -amount.toDouble();
+                          final formattedAmount = formatCurrency(
+                              currencyProvider.convert(convertedAmount.abs()),
+                              currencyProvider.currency
+                          );
+                          final displayAmount = '${transaction['type'] == 'income' ? '+' : '-'}$formattedAmount';
 
-                                      if (docId != null) {
-                                        await _firestore
-                                            .collection('transactions')
-                                            .doc(docId)
-                                            .delete();
-                                        print(
-                                            "Giao dịch đã bị xoá khỏi Firestore: $docId");
-                                      }
-
-                                      setState(() {
-                                        transactions.removeAt(index);
-                                      });
-                                    } catch (e) {
-                                      print("Lỗi khi xoá giao dịch: $e");
-                                    }
-                                  },
-                                  child: ListTile(
-                                    leading: Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: transaction['type'] == 'income'
-                                            ? Colors.teal.withOpacity(0.2)
-                                            : Colors.teal.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(9),
-                                      ),
-                                      child: Center(
-                                        child: Icon(
-                                          transaction['type'] == 'income'
-                                              ? Icons.attach_money
-                                              : Icons.shopping_cart,
-                                          color: transaction['type'] == 'income'
-                                              ? Colors.teal
-                                              : Colors.teal,
-                                        ),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      transaction['title'],
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Text(
-                                      formatDateV2(
-                                          DateTime.parse(transaction['date'])),
-                                    ),
-                                    trailing: Text(
-                                      formatCurrencyV2(transaction['amount']),
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: transaction['type'] == 'income'
-                                            ? Colors.black
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
+                          return Dismissible(
+                            key: Key(transaction['id'] ?? index.toString()),
+                            direction: DismissDirection.horizontal,
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: const Icon(Icons.delete, color: Colors.white),
                             ),
-                          ),
-                        ),
+                            secondaryBackground: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            onDismissed: (direction) async {
+                              try {
+                                final docId = transactions[index]['id'];
+
+                                if (docId != null) {
+                                  await _firestore
+                                      .collection('transactions')
+                                      .doc(docId)
+                                      .delete();
+                                  print("Giao dịch đã bị xoá khỏi Firestore: $docId");
+                                }
+
+                                setState(() {
+                                  transactions.removeAt(index);
+                                });
+                              } catch (e) {
+                                print("Lỗi khi xoá giao dịch: $e");
+                              }
+                            },
+                            child: ListTile(
+                              leading: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: transaction['type'] == 'income'
+                                      ? Colors.teal.withOpacity(0.2)
+                                      : Colors.teal.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(9),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    transaction['type'] == 'income'
+                                        ? Icons.attach_money
+                                        : Icons.shopping_cart,
+                                    color: transaction['type'] == 'income'
+                                        ? Colors.teal
+                                        : Colors.teal,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                transaction['title'],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                formatDateV2(
+                                    DateTime.parse(transaction['date'])),
+                              ),
+                              trailing: Text(
+                                displayAmount,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: transaction['type'] == 'income'
+                                      ? Colors.teal
+                                      : Colors.red,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -513,7 +274,7 @@ class _AddScreenState extends State<AddScreen> {
       child: DottedBorder(
         borderType: BorderType.RRect,
         radius: const Radius.circular(16),
-        dashPattern: [6, 6],
+        dashPattern: const [6, 6],
         color: Colors.grey,
         strokeWidth: 1.5,
         child: InkWell(

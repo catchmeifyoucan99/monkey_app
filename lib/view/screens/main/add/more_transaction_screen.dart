@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import '../../../../cores/providers/currency_provider.dart';
 import '../../../../cores/utils/format_utils.dart';
 import '../../../../cores/utils/getUserId.dart';
 
@@ -27,7 +28,7 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
 
   String? userId = getCurrentUserId();
 
-  Future<void> fetchData({bool isNextPage = false,}) async {
+  Future<void> fetchData({bool isNextPage = false}) async {
     if (isLoading || !hasMoreData) return;
     setState(() => isLoading = true);
 
@@ -82,6 +83,8 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lịch Sử Giao Dịch',
@@ -102,7 +105,7 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
           Expanded(
             child: isLoading && items.isEmpty
                 ? _buildLoadingIndicator()
-                : _buildTransactionList(),
+                : _buildTransactionList(currencyProvider),
           ),
           _buildPaginationControls(),
         ],
@@ -119,15 +122,20 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
     );
   }
 
-  Widget _buildTransactionList() {
+  Widget _buildTransactionList(CurrencyProvider currencyProvider) {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(15, 30, 15, 15),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final data = items[index].data() as Map<String, dynamic>;
-        final amount = data['amount'] as num;
-        final isIncome = amount >= 0;
+        final amount = (data['amount'] as num).toDouble();
+        final isIncome = data['type'] == 'income';
+        final convertedAmount = currencyProvider.convert(amount);
+        final formattedAmount = formatCurrency(
+          isIncome ? convertedAmount : -convertedAmount,
+          currencyProvider.currency,
+        );
         final amountColor = isIncome ? Colors.green[800]! : Colors.red[800]!;
         final icon = isIncome
             ? Icons.arrow_circle_up_rounded
@@ -180,7 +188,7 @@ class _MoreTransactionScreenState extends State<MoreTransactionScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  formatCurrencyV2(amount.toString()),
+                  formattedAmount,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,

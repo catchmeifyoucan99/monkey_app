@@ -40,12 +40,19 @@ String formatDateV2(DateTime date) {
 }
 
 String formatCurrency(double amount, String currencyCode) {
+  print('[FORMAT DEBUG] Formatting $amount $currencyCode');
+
+  final isNegative = amount < 0;
+  final absoluteAmount = amount.abs();
+
   final format = NumberFormat.currency(
     locale: _getLocale(currencyCode),
     symbol: _getSymbol(currencyCode),
     decimalDigits: currencyCode == 'VND' ? 0 : 2,
   );
-  return format.format(amount);
+
+  final result = '${isNegative ? '-' : ''}${format.format(absoluteAmount)}';
+  return result;
 }
 
 String _getLocale(String currencyCode) {
