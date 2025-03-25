@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'cores/interfaces/TransactionRepository.dart';
 import 'cores/providers/auth_provider.dart';
 import 'cores/providers/currency_provider.dart';
 import 'cores/repositories/FirebaseTransactionRepository.dart';
@@ -29,11 +30,17 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
+        Provider<TransactionRepository>(
+          create: (_) => FirebaseTransactionRepository(
+            fireStore: FirebaseFirestore.instance,
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
   );
 }
+
 
 
 class MyApp extends StatelessWidget {
@@ -75,7 +82,10 @@ class MyApp extends StatelessWidget {
       initialLocation: isFirstTime ? '/introduce' : '/login',
       routes: [
         GoRoute(path: '/',
-          builder: (context, state) => const MainScreen(),
+          builder: (context, state) {
+            final transactionRepository = context.read<TransactionRepository>();
+            return MainScreen(transactionRepository: transactionRepository);
+          },
         ),
         GoRoute(
           path: '/introduce',
@@ -83,7 +93,10 @@ class MyApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/home',
-          builder: (context, state) => const MainScreen(),
+          builder: (context, state) {
+            final transactionRepository = context.read<TransactionRepository>();
+            return MainScreen(transactionRepository: transactionRepository);
+          },
         ),
         GoRoute(
           path: '/login',
@@ -95,7 +108,9 @@ class MyApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/overView',
-          builder: (context, state) => const OverviewScreen(),
+          builder: (context, state) => OverviewScreen(
+            transactionRepository: context.read<TransactionRepository>(), // Lấy từ Provider nếu đang sử dụng Provider
+          ),
         ),
         GoRoute(
           path: '/totalSalary',
@@ -112,13 +127,13 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/addSalary',
           builder: (context, state) => AddSalaryScreen(
-            transactionRepository: FirebaseTransactionRepository(firestore: FirebaseFirestore.instance),
+            transactionRepository: FirebaseTransactionRepository(fireStore: FirebaseFirestore.instance),
           ),
         ),
         GoRoute(
           path: '/addExpense',
           builder: (context, state) => AddExpenseScreen(
-            transactionRepository: FirebaseTransactionRepository(firestore: FirebaseFirestore.instance),
+            transactionRepository: FirebaseTransactionRepository(fireStore: FirebaseFirestore.instance),
           ),
         ),
         GoRoute(

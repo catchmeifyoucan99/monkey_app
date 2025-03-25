@@ -11,12 +11,6 @@ class AuthService {
     try {
       FirebaseAuth.instance.setLanguageCode("vi");
 
-      var userExists = await auth.fetchSignInMethodsForEmail(email);
-      if (userExists.isNotEmpty) {
-        dev.log("Email đã tồn tại.");
-        return null;
-      }
-
       UserCredential userCredential = await auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -24,7 +18,6 @@ class AuthService {
 
       User? user = userCredential.user;
       if (user != null) {
-
         UserModel newUser = UserModel(uid: user.uid, email: email, name: name);
 
         await firestore.collection('users').doc(user.uid).set(newUser.toMap());
@@ -32,7 +25,11 @@ class AuthService {
         return newUser;
       }
     } on FirebaseAuthException catch (e) {
-      dev.log("Lỗi Firebase: ${e.code} - ${e.message}");
+      if (e.code == 'email-already-in-use') {
+        dev.log("Email đã tồn tại.");
+      } else {
+        dev.log("Lỗi Firebase: ${e.code} - ${e.message}");
+      }
     } catch (e) {
       dev.log("Lỗi không xác định: $e");
     }
@@ -50,7 +47,20 @@ class AuthService {
 
       User? user = userCredential.user;
       if (user != null && user.email != null) {
-        return UserModel(uid: user.uid, email: user.email!);
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+
+          return UserModel(
+            uid: user.uid,
+            email: user.email!,
+            name: data['name'] ?? 'Người dùng',
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       dev.log("Lỗi Firebase: ${e.code} - ${e.message}");

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:expense_personal/cores/providers/currency_provider.dart';
 import '../../../../../cores/utils/format_utils.dart';
+import '../../../../../cores/utils/getUserId.dart';
 import '../../../../../widgets/total_tab.dart';
 import '../../../../../widgets/week_calendar_widget.dart';
 
@@ -21,15 +22,17 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen>
   late TabController _tabController;
   DateTime? _selectedDay;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? userId = getCurrentUserId();
 
   Stream<QuerySnapshot> _getIncomesStream() {
-    if (_selectedDay == null) return const Stream.empty();
+    if (userId == null || _selectedDay == null) return const Stream.empty();
 
     final startOfDay = DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     return _firestore
         .collection('transactions')
+        .where('userId', isEqualTo: userId)
         .where('type', isEqualTo: 'income')
         .where('date', isGreaterThanOrEqualTo: startOfDay.toIso8601String())
         .where('date', isLessThan: endOfDay.toIso8601String())
