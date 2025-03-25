@@ -5,7 +5,7 @@ import 'package:expense_personal/widgets/input_decoration.dart';
 import 'package:expense_personal/widgets/custom_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/auth_provider.dart';
+import '../../../cores/providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -128,6 +128,7 @@ class _RegisterScreen extends State<RegisterScreen> {
             const SizedBox(height: 40),
 
             TextField(
+              key: Key('nameField'),
               controller: nameController,
               decoration: customInputDecoration('Tên', Icons.person),
               keyboardType: TextInputType.name,
@@ -135,6 +136,7 @@ class _RegisterScreen extends State<RegisterScreen> {
             const SizedBox(height: 20),
 
             TextField(
+              key: Key('emailField'),
               controller: emailController,
               decoration: customInputDecoration('Email', Icons.email),
               keyboardType: TextInputType.emailAddress,
@@ -142,6 +144,7 @@ class _RegisterScreen extends State<RegisterScreen> {
             const SizedBox(height: 20),
 
             TextField(
+              key: Key('passField'),
               controller: passwordController,
               decoration: customInputDecoration(
                 'Mật khẩu',
@@ -152,6 +155,7 @@ class _RegisterScreen extends State<RegisterScreen> {
             const SizedBox(height: 20),
 
             TextField(
+              key: Key('cfPassField'),
               controller: confirmPasswordController,
               decoration: customInputDecoration(
                 'Xác nhận mật khẩu',
@@ -162,8 +166,9 @@ class _RegisterScreen extends State<RegisterScreen> {
             const SizedBox(height: 30),
 
             CustomButton(
+              key: Key('registerButton'),
               label: 'Đăng ký',
-              backgroundColor: const Color(0xFF0E33F3),
+              backgroundColor: Colors.teal,
               onPressed: register,
               borderRadius: 12.0,
               color: Colors.white,

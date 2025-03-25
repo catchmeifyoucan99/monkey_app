@@ -1,114 +1,91 @@
-import 'package:expense_tracking/application/dto/email_password_login.dart';
-import 'package:expense_tracking/application/service/email_password_login_service.dart';
-import 'package:expense_tracking/exceptions/user_disabled_exception.dart';
-import 'package:expense_tracking/exceptions/user_notfound_exception.dart';
-import 'package:expense_tracking/exceptions/wrong_password_exception.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth_mocks/firebase_auth_mocks.dart' as mock;
+import 'package:expense_personal/cores/providers/auth_provider.dart';
+import 'package:expense_personal/view/screens/account/login_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:provider/provider.dart';
+import 'package:mockito/annotations.dart';
+import 'login_screen_test.mocks.dart';
 
-import 'email_password_login_service_test.mocks.dart';
-
-// Tạo mock cho FirebaseAuth và UserCredential
-@GenerateMocks([FirebaseAuth, UserCredential])
+@GenerateMocks([AuthProvider])
 void main() {
-  // Khai báo các biến
-  late MockFirebaseAuth mockFirebaseAuth;
-  late EmailPasswordLoginService loginService;
-  late EmailPasswordLogin loginData;
+  late MockAuthProvider mockAuthProvider;
 
-  // Thiết lập trước mỗi test
   setUp(() {
-    mockFirebaseAuth = MockFirebaseAuth();
-    loginService = EmailPasswordLoginService(auth: mockFirebaseAuth);
-    loginData =
-        EmailPasswordLogin(email: 'test@example.com', password: 'password123');
+    mockAuthProvider = MockAuthProvider();
   });
 
-  // Test case 1: Đăng nhập thành công
-  test('Đăng nhập thành công', () async {
-    // Arrange: Giả lập phương thức signInWithEmailAndPassword trả về UserCredential
-    when(mockFirebaseAuth.signInWithEmailAndPassword(
-      email: loginData.email,
-      password: loginData.password,
-    )).thenAnswer((_) async => MockUserCredential());
-
-    when(mockFirebaseAuth.currentUser).thenAnswer(
-          (realInvocation) => mock.MockUser(),
+  Widget createWidgetUnderTest() {
+    return ChangeNotifierProvider<AuthProvider>.value(
+      value: mockAuthProvider,
+      child: const MaterialApp(
+        home: LoginScreen(),
+      ),
     );
+  }
 
-    // Act: Gọi phương thức login
-    await loginService.login(loginData);
+  testWidgets('Hiển thị logo và tiêu đề', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
 
-    // Assert: Kiểm tra rằng phương thức signInWithEmailAndPassword được gọi đúng một lần
-    verify(mockFirebaseAuth.signInWithEmailAndPassword(
-      email: loginData.email,
-      password: loginData.password,
-    )).called(1);
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.text('monkey'), findsOneWidget);
   });
 
-  // Test case 2: Đăng nhập thất bại do người dùng không tồn tại
-  test('Đăng nhập thất bại do người dùng không tồn tại', () async {
-    // Arrange: Giả lập ném ra FirebaseAuthException với mã lỗi 'user-not-found'
-    when(mockFirebaseAuth.signInWithEmailAndPassword(
-      email: anyNamed('email'),
-      password: anyNamed('password'),
-    )).thenThrow(FirebaseAuthException(code: 'user-not-found'));
+  testWidgets('Nhập email và mật khẩu', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
 
-    // Act & Assert: Kiểm tra rằng phương thức login ném ra UserNotFoundException
-    expect(() => loginService.login(loginData),
-        throwsA(isA<UserNotFoundException>()));
+    await tester.enterText(find.byType(TextField).at(0), 'test@example.com');
+    await tester.enterText(find.byType(TextField).at(1), 'password123');
+
+    expect(find.text('test@example.com'), findsOneWidget);
+    expect(find.text('password123'), findsOneWidget);
   });
 
-  // Test case 3: Đăng nhập thất bại do mật khẩu sai
-  test('Đăng nhập thất bại do mật khẩu sai', () async {
-    // Arrange: Giả lập ném ra FirebaseAuthException với mã lỗi 'wrong-password'
-    when(mockFirebaseAuth.signInWithEmailAndPassword(
-      email: anyNamed('email'),
-      password: anyNamed('password'),
-    )).thenThrow(FirebaseAuthException(code: 'wrong-password'));
+  testWidgets('Đăng nhập thành công', (WidgetTester tester) async {
+    when(mockAuthProvider.login(any, any)).thenAnswer((_) async => true);
 
-    // Act & Assert: Kiểm tra rằng phương thức login ném ra WrongPasswordException
-    expect(() => loginService.login(loginData),
-        throwsA(isA<WrongPasswordException>()));
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.enterText(find.byType(TextField).at(0), 'test@example.com');
+    await tester.enterText(find.byType(TextField).at(1), 'password123');
+    await tester.tap(find.text('Đăng nhập'));
+    await tester.pump();
+
+    verify(mockAuthProvider.login('test@example.com', 'password123')).called(1);
   });
 
-  // Test case 4: Đăng nhập thất bại do tài khoản bị vô hiệu hóa
-  test('Đăng nhập thất bại do tài khoản bị vô hiệu hóa', () async {
-    // Arrange: Giả lập ném ra FirebaseAuthException với mã lỗi 'user-disabled'
-    when(mockFirebaseAuth.signInWithEmailAndPassword(
-      email: loginData.email,
-      password: loginData.password,
-    )).thenThrow(FirebaseAuthException(code: 'user-disabled'));
+  testWidgets('Login failure', (WidgetTester tester) async {
+    when(mockAuthProvider.login(any, any)).thenAnswer((_) async => false);
 
-    // Act & Assert: Kiểm tra rằng phương thức login ném ra UserDisabledException
-    expect(() => loginService.login(loginData),
-        throwsA(isA<UserDisabledException>()));
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.enterText(find.byType(TextField).at(0), 'wrong@example.com');
+    await tester.enterText(find.byType(TextField).at(1), 'wrongpassword');
+    await tester.tap(find.text('Đăng nhập'));
+    await tester.pump();
+
+    expect(find.text('Sai tài khoản hoặc mật khẩu!'), findsOneWidget);
   });
 
-  // Test case 5: Đăng nhập thất bại do lỗi khác
-  test('Đăng nhập thất bại do lỗi khác', () async {
-    // Arrange: Giả lập ném ra FirebaseAuthException với mã lỗi bất kỳ khác
-    when(mockFirebaseAuth.signInWithEmailAndPassword(
-      email: loginData.email,
-      password: loginData.password,
-    )).thenThrow(FirebaseAuthException(code: 'other-error'));
+  testWidgets('Login fail', (WidgetTester tester) async {
+    when(mockAuthProvider.login(any, any)).thenAnswer((_) async => false);
 
-    // Act & Assert: Kiểm tra rằng phương thức login ném ra Exception
-    expect(() => loginService.login(loginData), throwsA(isA<Exception>()));
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.enterText(find.byType(TextField).at(0), ' ');
+    await tester.enterText(find.byType(TextField).at(1), 'wrongpassword');
+    await tester.tap(find.text('Đăng nhập'));
+    await tester.pump();
+
+    verifyNever(mockAuthProvider.login(' ', 'wrongpassword')).called(0);
   });
-  //testcase 6 : Đăng nhập thất bại do email trống
-  test('Đăng nhập thất bại do email trống', () async {
-    final emptyEmailData = EmailPasswordLogin(email: '', password: 'password123@');
 
-    expect(() => loginService.login(emptyEmailData), throwsA(isA<ArgumentError>()));
-  });
-//test case 7: Đăng nhập thất bại do password trống
-  test('Đăng nhập thất bại do password trống', () async {
-    final emptyPasswordData = EmailPasswordLogin(email: 'test@example.com', password: '');
+  testWidgets('Login fail', (WidgetTester tester) async {
+    when(mockAuthProvider.login(any, any)).thenAnswer((_) async => false);
 
-    expect(() => loginService.login(emptyPasswordData), throwsA(isA<ArgumentError>()));
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.enterText(find.byType(TextField).at(0), 'wrong@example.com');
+    await tester.enterText(find.byType(TextField).at(1), ' ');
+    await tester.tap(find.text('Đăng nhập'));
+    await tester.pump();
+
+    verifyNever(mockAuthProvider.login('wrong@example.com', '')).called(0);
   });
 }

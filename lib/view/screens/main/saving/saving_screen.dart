@@ -1,6 +1,7 @@
-import 'package:expense_personal/model/saving.dart';
-import 'package:expense_personal/services/saving_service.dart';
+import 'package:expense_personal/cores/model/saving.dart';
+import 'package:expense_personal/cores/services/saving_service.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class SavingScreen extends StatefulWidget {
   const SavingScreen({super.key});
@@ -11,11 +12,13 @@ class SavingScreen extends StatefulWidget {
 
 class _SavingScreenState extends State<SavingScreen> {
   final SavingService savingService = SavingService();
+  final NumberFormat currencyFormat = NumberFormat("#,###");
+
+  String _savingCategory = 'Income';
 
   void _showAddSavingDialog(BuildContext context) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController targetController = TextEditingController();
-    String savingCategory = 'Income';
 
     showDialog(
       context: context,
@@ -36,13 +39,15 @@ class _SavingScreenState extends State<SavingScreen> {
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                value: savingCategory,
+                value: _savingCategory,
                 decoration: const InputDecoration(labelText: 'Loại'),
                 items: ['Income', 'Expense'].map((String value) {
                   return DropdownMenuItem(value: value, child: Text(value));
                 }).toList(),
                 onChanged: (String? newValue) {
-                  savingCategory = newValue!;
+                  setState(() {
+                    _savingCategory = newValue!;
+                  });
                 },
               ),
             ],
@@ -54,27 +59,55 @@ class _SavingScreenState extends State<SavingScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                String savingName = nameController.text;
-                double targetAmount = double.tryParse(targetController.text) ?? 0.0;
+                String savingName = nameController.text.trim();
+                double? targetAmount = double.tryParse(targetController.text.replaceAll(',', ''));
 
-                if (savingName.isNotEmpty && targetAmount > 0) {
-                  savingService.addSaving(
-                    Saving(
-                      id: '',
-                      name: savingName,
-                      targetAmount: targetAmount,
-                      currentAmount: 0.0,
-                      category: savingCategory,
-                    ),
+                if (savingName.isEmpty || targetAmount == null || targetAmount <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Vui lòng nhập tên và mục tiêu hợp lệ')),
                   );
-                  Navigator.pop(context);
+                  return;
                 }
+
+                savingService.addSaving(
+                  Saving(
+                    id: '',
+                    name: savingName,
+                    targetAmount: targetAmount,
+                    currentAmount: 0.0,
+                    category: _savingCategory,
+                  ),
+                );
+                Navigator.pop(context);
               },
               child: const Text('Thêm'),
             ),
           ],
         );
       },
+    );
+  }
+
+  void _confirmDelete(Saving saving) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận'),
+        content: const Text('Bạn có chắc chắn muốn xóa khoản tiết kiệm này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              savingService.deleteSaving(saving.id);
+              Navigator.pop(context);
+            },
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -88,6 +121,12 @@ class _SavingScreenState extends State<SavingScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.blue),
+            onPressed: () => _showAddSavingDialog(context),
+          ),
+        ],
       ),
       body: StreamBuilder<List<Saving>>(
         stream: savingService.getSavings(),
@@ -116,7 +155,7 @@ class _SavingScreenState extends State<SavingScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Mục tiêu: ${saving.targetAmount.toStringAsFixed(0)} VND',
+                      Text('Mục tiêu: ${currencyFormat.format(saving.targetAmount)} VND',
                           style: const TextStyle(fontSize: 14)),
                       const SizedBox(height: 5),
                       LinearProgressIndicator(
@@ -126,14 +165,14 @@ class _SavingScreenState extends State<SavingScreen> {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        'Đã tiết kiệm: ${saving.currentAmount.toStringAsFixed(0)} VND',
+                        'Đã tiết kiệm: ${currencyFormat.format(saving.currentAmount)} VND',
                         style: const TextStyle(fontSize: 14),
                       ),
                     ],
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.redAccent),
-                    onPressed: () => savingService.deleteSaving(saving.id),
+                    onPressed: () => _confirmDelete(saving),
                   ),
                 ),
               );

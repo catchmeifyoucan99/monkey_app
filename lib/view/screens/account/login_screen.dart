@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:expense_personal/widgets/custom_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:expense_personal/widgets/input_decoration.dart';
-import '../../../providers/auth_provider.dart';
+import '../../../cores/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -128,7 +128,7 @@ class _LoginScreen extends State<LoginScreen> {
             // Login button
             CustomButton(
               label: 'Đăng nhập',
-              backgroundColor: const Color(0xFF0E33F3),
+              backgroundColor: Colors.teal,
               onPressed: login,
               borderRadius: 12.0,
               color: Colors.white,

@@ -6,7 +6,7 @@ import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
 import 'package:mockito/annotations.dart';
 
-import '../categories/add_category_test.mocks.dart';
+import 'add_salary_test.mocks.dart';
 
 @GenerateMocks([FirebaseFirestore, CollectionReference, DocumentReference])
 void main() {
@@ -29,23 +29,23 @@ void main() {
     return Provider<FirebaseTransactionRepository>.value(
       value: transactionRepository,
       child: const MaterialApp(
-        home: Scaffold(body: Text('Test FirebaseExpenseRepository')),
+        home: Scaffold(body: Text('Test FirebaseSalaryRepository')),
       ),
     );
   }
 
-  testWidgets('Add Expense success', (WidgetTester tester) async {
+  testWidgets('Add Salary success', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
 
-    await transactionRepository.addExpense('Mua sắm', 500.0, 'Shopping', DateTime(2024, 3, 18));
+    await transactionRepository.addIncome('Lương tháng', 5000000.0, 'Lương', DateTime(2024, 3, 18));
 
     verifyNever(mockCollection.add(argThat(isA<Map<String, dynamic>>()))).called(0);
   });
 
-  testWidgets('Amount minus', (WidgetTester tester) async {
+  testWidgets('Amount negative', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
 
-    await transactionRepository.addExpense('Mua sắm', -100.0, 'Shopping', DateTime(2024, 3, 18));
+    await transactionRepository.addIncome('Lương tháng', -5000000.0, 'Lương', DateTime(2024, 3, 18));
 
     verifyNever(mockCollection.add(any));
   });
@@ -53,7 +53,7 @@ void main() {
   testWidgets('No title', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
 
-    await transactionRepository.addExpense('', 100.0, 'Shopping', DateTime(2024, 3, 18));
+    await transactionRepository.addIncome('', 5000000.0, 'Lương phụ', DateTime(2024, 3, 18));
 
     verifyNever(mockCollection.add(any));
   });

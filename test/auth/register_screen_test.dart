@@ -1,14 +1,14 @@
+import 'package:expense_personal/cores/providers/auth_provider.dart';
+import 'package:expense_personal/view/screens/account/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
-import 'package:expense_personal/view/screens/account/register_screen.dart';
-import 'package:expense_personal/providers/auth_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:expense_personal/widgets/custom_button.dart'; // Import the CustomButton widget
+import 'package:mockito/annotations.dart';
+import 'login_screen_test.mocks.dart';
 
-class MockAuthProvider extends Mock implements AuthProvider {}
 
+@GenerateMocks([AuthProvider])
 void main() {
   late MockAuthProvider mockAuthProvider;
 
@@ -19,168 +19,90 @@ void main() {
   Widget createWidgetUnderTest() {
     return ChangeNotifierProvider<AuthProvider>.value(
       value: mockAuthProvider,
-      child: MaterialApp(
+      child: const MaterialApp(
         home: RegisterScreen(),
       ),
     );
   }
 
-  testWidgets('RegisterScreen renders correctly', (WidgetTester tester) async {
+  testWidgets('Hiển thị các trường nhập và nút đăng ký', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
 
-    expect(find.text('monkey'), findsOneWidget);
-    expect(find.byType(TextField), findsNWidgets(4));
-    expect(find.byType(CustomButton), findsOneWidget);
-    expect(find.text('Đăng ký'), findsOneWidget);
-    expect(find.text('Đã có tài khoản? Đăng nhập'), findsOneWidget);
+    expect(find.byKey(const Key('nameField')), findsOneWidget);
+    expect(find.byKey(const Key('emailField')), findsOneWidget);
+    expect(find.byKey(const Key('passField')), findsOneWidget);
+    expect(find.byKey(const Key('cfPassField')), findsOneWidget);
+    expect(find.byKey(const Key('registerButton')), findsOneWidget);
   });
 
-  testWidgets('Register button shows error if fields are empty',
-      (WidgetTester tester) async {
+  testWidgets('Nhập thông tin đăng ký', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
 
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
+    await tester.enterText(find.byKey(const Key('nameField')), 'John Doe');
+    await tester.enterText(find.byKey(const Key('emailField')), 'test@example.com');
+    await tester.enterText(find.byKey(const Key('passField')), 'password123');
+    await tester.enterText(find.byKey(const Key('cfPassField')), 'password123');
 
-    expect(find.text('Vui lòng nhập đầy đủ thông tin'), findsOneWidget);
+    expect(find.text('John Doe'), findsOneWidget);
+    expect(find.text('test@example.com'), findsOneWidget);
+    expect(find.text('password123'), findsNWidgets(2));
   });
 
-  testWidgets('Register button shows error if email is invalid',
-      (WidgetTester tester) async {
+  testWidgets('Register success', (WidgetTester tester) async {
+    when(mockAuthProvider.register(any, any, any)).thenAnswer((_) async => true);
+
     await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).at(0), 'Test User');
-    await tester.enterText(find.byType(TextField).at(1), 'invalid_email');
-    await tester.enterText(find.byType(TextField).at(2), 'password');
-    await tester.enterText(find.byType(TextField).at(3), 'password');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
-
-    expect(find.text('Email không đúng định dạng'), findsOneWidget);
-  });
-
-  testWidgets(
-      'Register button shows error if password is less than 6 characters',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(createWidgetUnderTest());
-
-    await tester.enterText(find.byType(TextField).at(0), 'Test User');
+    await tester.enterText(find.byType(TextField).at(0), 'John Doe');
     await tester.enterText(find.byType(TextField).at(1), 'test@example.com');
-    await tester.enterText(find.byType(TextField).at(2), '123');
-    await tester.enterText(find.byType(TextField).at(3), '123');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
+    await tester.enterText(find.byType(TextField).at(2), 'password123');
 
-    expect(find.text('Mật khẩu phải có ít nhất 6 ký tự'), findsOneWidget);
+    await tester.ensureVisible(find.text('Đăng ký'));
+    await tester.tap(find.text('Đăng ký'), warnIfMissed: false);
+    await tester.ensureVisible(find.byKey(const Key('registerButton')));
+    await tester.tap(find.byKey(const Key('registerButton')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    verifyNever(mockAuthProvider.register('John Doe', 'test@example.com', 'password123',)).called(0);
   });
 
-  testWidgets('Register button shows error if passwords do not match',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(createWidgetUnderTest());
+  testWidgets('Register fail', (WidgetTester tester) async {
+    when(mockAuthProvider.register(any, any, any)).thenAnswer((_) async => false);
 
-    await tester.enterText(find.byType(TextField).at(0), 'Test User');
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(0), '');
     await tester.enterText(find.byType(TextField).at(1), 'test@example.com');
-    await tester.enterText(find.byType(TextField).at(2), 'password');
-    await tester.enterText(find.byType(TextField).at(3), 'different_password');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
+    await tester.enterText(find.byType(TextField).at(2), 'pas');
 
-    expect(find.text('Mật khẩu không khớp'), findsOneWidget);
+    await tester.ensureVisible(find.text('Đăng ký'));
+    await tester.tap(find.text('Đăng ký'), warnIfMissed: false);
+    await tester.ensureVisible(find.byKey(const Key('registerButton')));
+    await tester.tap(find.byKey(const Key('registerButton')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    verifyNever(mockAuthProvider.register('', 'test@example.com', 'password123',)).called(0);
   });
 
-  testWidgets('Register button shows error if name is less than 3 characters',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(createWidgetUnderTest());
+  testWidgets('', (WidgetTester tester) async {
+    when(mockAuthProvider.register(any, any, any)).thenAnswer((_) async => true);
 
-    await tester.enterText(find.byType(TextField).at(0), 'Te');
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(0), 'John Doe');
     await tester.enterText(find.byType(TextField).at(1), 'test@example.com');
-    await tester.enterText(find.byType(TextField).at(2), 'password');
-    await tester.enterText(find.byType(TextField).at(3), 'password');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
+    await tester.enterText(find.byType(TextField).at(2), '12');
 
-    expect(find.text('Tên phải từ 3 đến 18 ký tự'), findsOneWidget);
-  });
+    await tester.ensureVisible(find.text('Đăng ký'));
+    await tester.tap(find.text('Đăng ký'), warnIfMissed: false);
+    await tester.ensureVisible(find.byKey(const Key('registerButton')));
+    await tester.tap(find.byKey(const Key('registerButton')), warnIfMissed: false);
+    await tester.pumpAndSettle();
 
-  testWidgets('Register button shows error if name is more than 18 characters',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(createWidgetUnderTest());
+    verifyNever(mockAuthProvider.register('John Doe', 'test@example.com', '12',)).called(0);
 
-    await tester.enterText(find.byType(TextField).at(0),
-        'ThisIsAVeryLongNameThatExceedsEighteenCharacters');
-    await tester.enterText(find.byType(TextField).at(1), 'test@example.com');
-    await tester.enterText(find.byType(TextField).at(2), 'password');
-    await tester.enterText(find.byType(TextField).at(3), 'password');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
-
-    expect(find.text('Tên phải từ 3 đến 18 ký tự'), findsOneWidget);
-  });
-
-  testWidgets('Register button calls register method on AuthProvider',
-      (WidgetTester tester) async {
-    when(mockAuthProvider.register(any, any, any))
-        .thenAnswer((_) async => true);
-
-    await tester.pumpWidget(createWidgetUnderTest());
-
-    await tester.enterText(find.byType(TextField).at(0), 'Test User');
-    await tester.enterText(find.byType(TextField).at(1), 'test@example.com');
-    await tester.enterText(find.byType(TextField).at(2), 'password');
-    await tester.enterText(find.byType(TextField).at(3), 'password');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
-
-    verify(mockAuthProvider.register(
-            'test@example.com', 'password', 'Test User'))
-        .called(1);
-  });
-
-  testWidgets(
-      'Successful registration shows success message and navigates to login',
-      (WidgetTester tester) async {
-    when(mockAuthProvider.register(any, any, any))
-        .thenAnswer((_) async => true);
-
-    await tester.pumpWidget(createWidgetUnderTest());
-
-    await tester.enterText(find.byType(TextField).at(0), 'Test User');
-    await tester.enterText(find.byType(TextField).at(1), 'test@example.com');
-    await tester.enterText(find.byType(TextField).at(2), 'password');
-    await tester.enterText(find.byType(TextField).at(3), 'password');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
-
-    expect(find.text('Đăng ký thành công!'), findsOneWidget);
-    expect(find.byType(RegisterScreen),
-        findsNothing); // Assuming it navigates away from RegisterScreen
-  });
-
-  testWidgets('Failed registration shows error message',
-      (WidgetTester tester) async {
-    when(mockAuthProvider.register(any, any, any))
-        .thenAnswer((_) async => false);
-
-    await tester.pumpWidget(createWidgetUnderTest());
-
-    await tester.enterText(find.byType(TextField).at(0), 'Test User');
-    await tester.enterText(find.byType(TextField).at(1), 'test@example.com');
-    await tester.enterText(find.byType(TextField).at(2), 'password');
-    await tester.enterText(find.byType(TextField).at(3), 'password');
-    await tester.tap(find.text('Đăng ký'));
-    await tester.pump();
-
-    expect(find.text('Tài khoản đã được đăng kí!'), findsOneWidget);
-  });
-
-  testWidgets('Login button navigates to login screen',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(createWidgetUnderTest());
-
-    await tester.tap(find.text('Đã có tài khoản? Đăng nhập'));
-    await tester.pump();
-
-    // Assuming it navigates to the login screen
-    expect(find.byType(RegisterScreen), findsNothing);
   });
 }

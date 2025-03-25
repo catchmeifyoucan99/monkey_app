@@ -1,39 +1,19 @@
 import 'package:expense_personal/widgets/animated_add_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../utils/getUserId.dart';
+import '../../../../cores/interfaces/TransactionRepository.dart';
+import '../../../../cores/repositories/FirebaseCategoryRepository.dart';
+import '../../../../cores/utils/getUserId.dart';
 import '../../../../widgets/week_calendar_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddSalaryScreen extends StatefulWidget {
-  const AddSalaryScreen({super.key});
+  const AddSalaryScreen({super.key, required this.transactionRepository});
+
+  final TransactionRepository transactionRepository;
 
   @override
   State<AddSalaryScreen> createState() => _AddSalaryScreenState();
-}
-
-Future<void> addIncome(String title, double amount, String category, DateTime date) async {
-  try {
-    String? userId = getCurrentUserId();
-
-    if (userId == null) {
-      print('Không tìm thấy người dùng');
-      return;
-    }
-
-    await FirebaseFirestore.instance.collection('transactions').add({
-      'title': title,
-      'amount': amount,
-      'category': category,
-      'date': date.toIso8601String(),
-      'type': 'income',
-      'createdAt': FieldValue.serverTimestamp(),
-      'userId': userId,
-    });
-    print('Thu nhập đã được lưu!');
-  } catch (e) {
-    print('Lỗi khi lưu thu nhập: $e');
-  }
 }
 
 
@@ -190,7 +170,7 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    AnimatedAddButton( onCategorySelected: _onCategorySelected, type: 'income',),
+                    AnimatedAddButton( onCategorySelected: _onCategorySelected, type: 'income', categoryRepository: FirebaseCategoryRepository(),),
 
                     const SizedBox(height: 24),
                     SizedBox(
@@ -217,7 +197,7 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
 
                           DateTime selectedDate = _selectedDay ?? _focusedWeek;
                           try {
-                            await addIncome(
+                            await widget.transactionRepository.addIncome(
                               titleController.text,
                               amount,
                               _selectedCategory!,

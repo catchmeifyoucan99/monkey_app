@@ -61,7 +61,6 @@ class TotalTab extends StatelessWidget {
   }
 
   Widget _buildTabContent(List<Map<String, dynamic>> transactions, Color color) {
-    final numberFormat = NumberFormat("#,##0");
     final dateFormat = DateFormat('dd/MM/yyyy');
 
     return Container(
@@ -77,6 +76,7 @@ class TotalTab extends StatelessWidget {
         itemCount: transactions.length,
         itemBuilder: (context, index) {
           var transaction = transactions[index];
+          print('[TAB DEBUG] Displaying: ${transaction['title']} | ${transaction['displayAmount']}');
 
           IconData transactionIcon = transaction['type'] == 'income'
               ? Icons.arrow_downward
@@ -85,7 +85,6 @@ class TotalTab extends StatelessWidget {
               ? Colors.green
               : Colors.red;
 
-          String formattedAmount = numberFormat.format(transaction['amount'] ?? 0);
           String formattedDate = dateFormat.format(transaction['date'] ?? DateTime.now());
 
           return Card(
@@ -111,7 +110,7 @@ class TotalTab extends StatelessWidget {
                 ),
               ),
               trailing: Text(
-                "$formattedAmount VND",
+                transaction['displayAmount'] ?? '',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,

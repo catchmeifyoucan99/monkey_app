@@ -1,5 +1,5 @@
-import 'package:expense_personal/model/user_model.dart';
-import 'package:expense_personal/services/auth_service.dart';
+import 'package:expense_personal/cores/model/user_model.dart';
+import 'package:expense_personal/cores/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class AuthProvider with ChangeNotifier {
