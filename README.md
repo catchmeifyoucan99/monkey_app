@@ -1,4 +1,4 @@
-🚀 Monkey is a smart expense management app built with Flutter, integrating AI-powered receipt scanning, currency conversion, and Firebase for data storage. To ensure high reliability, the app includes unit testing to validate its core functionalities, such as expense categorization, AI-based text extraction, and currency conversion.
+🐵 Monkey is a smart expense management app built with Flutter, integrating AI-powered receipt scanning, currency conversion, and Firebase for data storage. To ensure high reliability, the app includes unit testing to validate its core functionalities, such as expense categorization, AI-based text extraction, and currency conversion.
 
 🚀 Technologies Used
 Flutter – Cross-platform mobile development framework.
