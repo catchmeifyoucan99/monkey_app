@@ -89,6 +89,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print("Groq Response: ${data['choices'][0]['message']['content']}");
+
     } else {
       print("Error: ${response.statusCode} - ${response.body}");
     }
