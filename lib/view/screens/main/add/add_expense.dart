@@ -61,7 +61,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lưu thu nhập thành công')),
+        const SnackBar(content: Text('Lưu chi tiêu thành công')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +202,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                     const SizedBox(height: 30),
                     const Text(
-                      'Danh mục thu nhập:',
+                      'Danh mục chi tiêu:',
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

@@ -135,31 +135,83 @@ class TotalTab extends StatelessWidget {
       return _buildEmptyState('Không có dữ liệu danh mục');
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: 250, // Chiều cao cố định cho biểu đồ
-            child: ExpenseBarChart(
-              categoryData: {
-                for (final cat in categories)
-                  cat['category']: cat['amount']
-              },
-              primaryColor: Colors.teal,
-              secondaryColor: Colors.teal.shade200,
-            ),
+    return Column(
+      children: [
+        // Biểu đồ
+        ExpenseBarChart(
+          categoryData: {
+            for (final cat in categories) cat['category']: cat['amount'],
+          },
+          positiveColor: Colors.teal,
+          negativeColor: Colors.redAccent,
+        ),
+
+        // Danh sách categories
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          ...categories.map((category) => _buildCategoryItem(
-            category['category'],
-            category['displayAmount'],
-            categories.indexOf(category),
-          )).toList(),
-        ],
-      ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: categories.length,
+            separatorBuilder: (context, index) => Divider(
+              height: 1,
+              color: Colors.grey.shade100,
+            ),
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              final isPositive = (category['amount'] as num) >= 0;
+
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                leading: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isPositive
+                        ? Colors.teal.withOpacity(0.2)
+                        : Colors.redAccent.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                    color: isPositive ? Colors.teal : Colors.redAccent,
+                    size: 18,
+                  ),
+                ),
+                title: Text(
+                  category['category'] ?? 'Không xác định',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+                trailing: Text(
+                  category['displayAmount'] ?? '0',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isPositive ? Colors.teal : Colors.redAccent,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
+
 
   Widget _buildCategoryItem(String category, String amount, int index) {
     final colors = [

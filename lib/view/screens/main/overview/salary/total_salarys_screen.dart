@@ -114,6 +114,8 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen>
                     final convertedTotal = currencyProvider.convert(total);
                     final formattedTotal = formatCurrency(convertedTotal, currencyProvider.currency);
 
+                    final categoryData = _processCategoryData(docs, currencyProvider);
+
                     return Column(
                       children: [
                         TotalCircle(total: formattedTotal),
@@ -130,7 +132,7 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen>
                           ),
                         ),
                         const SizedBox(height: 25),
-                        _buildTabSection(docs, currencyProvider),
+                        _buildTabSection(docs, currencyProvider, categoryData),
                       ],
                     );
                   },
@@ -144,7 +146,11 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen>
     );
   }
 
-  Widget _buildTabSection(List<QueryDocumentSnapshot> docs, CurrencyProvider currencyProvider) {
+  Widget _buildTabSection(
+      List<QueryDocumentSnapshot> docs,
+      CurrencyProvider currencyProvider,
+      Map<String, double> categoryData,
+      ) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.6,
       padding: const EdgeInsets.all(16),
@@ -152,12 +158,39 @@ class _TotalSalarysScreenState extends State<TotalSalarysScreen>
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      child: TotalTab(
-        tabController: _tabController,
-        spendsData: _processFirestoreDocs(docs, currencyProvider),
-        categoriesData: [],
+      child: Consumer<CurrencyProvider>(
+        builder: (context, currencyProvider, child) {
+          return TotalTab(
+            tabController: _tabController,
+            spendsData: _processFirestoreDocs(docs, currencyProvider),
+            categoriesData: categoryData.entries.map((e) => {
+              'category': e.key,
+              'amount': e.value,
+              'displayAmount': formatCurrency(e.value, currencyProvider.currency),
+            }).toList(),
+          );
+        },
       ),
     );
+  }
+
+  Map<String, double> _processCategoryData(List<QueryDocumentSnapshot> docs, CurrencyProvider currencyProvider) {
+    final categoryMap = <String, double>{};
+
+    for (final doc in docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final category = data['category']?.toString() ?? 'Khác';
+      final amount = (data['amount'] as num).toDouble();
+      final convertedAmount = currencyProvider.convert(amount);
+
+      categoryMap.update(
+        category,
+            (value) => value + convertedAmount,
+        ifAbsent: () => convertedAmount,
+      );
+    }
+
+    return categoryMap;
   }
 
   List<Map<String, dynamic>> _processFirestoreDocs(
