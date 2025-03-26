@@ -1,3 +1,4 @@
+import 'package:expense_personal/widgets/transaction_gauge_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -60,12 +61,17 @@ class TotalTab extends StatelessWidget {
     );
   }
 
-  Widget _buildTabContent(List<Map<String, dynamic>> transactions, Color color) {
-    final dateFormat = DateFormat('dd/MM/yyyy');
+  Widget _buildTabContent(List<Map<String, dynamic>> data, Color color) {
+    // Nếu là tab Categories (màu cam) thì hiển thị khác
+    if (color == Colors.orange) {
+      return _buildCategoryView(data);
+    }
 
+    // Còn lại là tab Spends (màu xanh)
+    final dateFormat = DateFormat('dd/MM/yyyy');
     return Container(
       padding: const EdgeInsets.all(8),
-      child: transactions.isEmpty
+      child: data.isEmpty
           ? Center(
         child: Text(
           'Chưa có dữ liệu',
@@ -73,9 +79,9 @@ class TotalTab extends StatelessWidget {
         ),
       )
           : ListView.builder(
-        itemCount: transactions.length,
+        itemCount: data.length,
         itemBuilder: (context, index) {
-          var transaction = transactions[index];
+          var transaction = data[index];
           print('[TAB DEBUG] Displaying: ${transaction['title']} | ${transaction['displayAmount']}');
 
           IconData transactionIcon = transaction['type'] == 'income'
@@ -123,6 +129,90 @@ class TotalTab extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildCategoryView(List<Map<String, dynamic>> categories) {
+    if (categories.isEmpty) {
+      return _buildEmptyState('Không có dữ liệu danh mục');
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 250, // Chiều cao cố định cho biểu đồ
+            child: ExpenseBarChart(
+              categoryData: {
+                for (final cat in categories)
+                  cat['category']: cat['amount']
+              },
+              primaryColor: Colors.teal,
+              secondaryColor: Colors.teal.shade200,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...categories.map((category) => _buildCategoryItem(
+            category['category'],
+            category['displayAmount'],
+            categories.indexOf(category),
+          )).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryItem(String category, String amount, int index) {
+    final colors = [
+      Colors.teal,
+      Colors.teal.shade300,
+      Colors.teal.shade200,
+      Colors.teal.shade100,
+    ];
+
+    return ListTile(
+      leading: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: colors[index % colors.length],
+          shape: BoxShape.circle,
+        ),
+      ),
+      title: Text(
+        category,
+        style: const TextStyle(fontWeight: FontWeight.w500),
+      ),
+      trailing: Text(
+        amount,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.teal,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.insert_chart_outlined,
+              size: 48,
+              color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
 
 }
