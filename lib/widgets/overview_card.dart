@@ -1,13 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:expense_personal/cores/utils/getUserId.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:expense_personal/cores/providers/currency_provider.dart';
+import '../cores/interfaces/TransactionRepository.dart';
 import '../cores/utils/format_utils.dart';
+import '../cores/utils/getUserId.dart';
+
 
 class OverviewCardList extends StatefulWidget {
-  const OverviewCardList({super.key});
+  final TransactionRepository transactionRepository;
+
+  const OverviewCardList({super.key, required this.transactionRepository});
 
   @override
   _OverviewCardListState createState() => _OverviewCardListState();
@@ -23,38 +26,13 @@ class _OverviewCardListState extends State<OverviewCardList> {
     _fetchTransactions();
   }
 
+  final String? userId = getCurrentUserId();
+
   Future<void> _fetchTransactions() async {
-    final String? userId = getCurrentUserId();
-    DateTime now = DateTime.now();
-    DateTime startOfMonth = DateTime(now.year, now.month, 1);
-    DateTime endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+    if (userId == null) return;
 
-    QuerySnapshot incomeQuery = await FirebaseFirestore.instance
-        .collection('transactions')
-        .where('userId', isEqualTo: userId)
-        .where('type', isEqualTo: 'income')
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
-        .get();
-
-    QuerySnapshot expenseQuery = await FirebaseFirestore.instance
-        .collection('transactions')
-        .where('userId', isEqualTo: userId)
-        .where('type', isEqualTo: 'expense')
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
-        .get();
-
-    int incomeTotal = 0;
-    int expenseTotal = 0;
-
-    for (var doc in incomeQuery.docs) {
-      incomeTotal += (doc['amount'] as num).toInt();
-    }
-
-    for (var doc in expenseQuery.docs) {
-      expenseTotal += (doc['amount'] as num).toInt();
-    }
+    int incomeTotal = await widget.transactionRepository.getTotalIncome(userId!);
+    int expenseTotal = await widget.transactionRepository.getTotalExpense(userId!);
 
     setState(() {
       totalIncome = incomeTotal;

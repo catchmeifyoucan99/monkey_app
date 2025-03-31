@@ -20,6 +20,7 @@ class AuthProvider with ChangeNotifier {
     return _user != null;
   }
 
+
   Future<void> logout() async {
     await _authService.logout();
     _user = null;

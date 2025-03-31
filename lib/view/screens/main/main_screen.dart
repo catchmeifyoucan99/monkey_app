@@ -1,13 +1,16 @@
-import 'package:expense_personal/view/screens/main/add/add_screen.dart';
-import 'package:expense_personal/view/screens/main/notification/notification_screen.dart';
-import 'package:expense_personal/view/screens/main/saving/saving_screen.dart';
-import 'package:expense_personal/view/screens/main/setting/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_personal/view/screens/main/overview/overview_screen.dart';
+import 'package:expense_personal/view/screens/main/saving/saving_screen.dart';
+import 'package:expense_personal/view/screens/main/notification/notification_screen.dart';
+import 'package:expense_personal/view/screens/main/setting/setting_screen.dart';
+import 'package:expense_personal/view/screens/main/add/add_screen.dart';
 
+import '../../../cores/interfaces/TransactionRepository.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final TransactionRepository transactionRepository;
+
+  const MainScreen({super.key, required this.transactionRepository});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -15,14 +18,19 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  late List<Widget> _screens;
 
-  final List<Widget> _screens = [
-    const OverviewScreen(),
-    const SavingScreen(),
-    const NotificationScreen(),
-    const SettingScreen(),
-    const AddScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      OverviewScreen(transactionRepository: widget.transactionRepository), // Truyền repository vào
+      const SavingScreen(),
+      const NotificationScreen(),
+      const SettingScreen(),
+      const AddScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +74,7 @@ class _MainScreenState extends State<MainScreen> {
               },
               color: _currentIndex == 1 ? Colors.teal : Colors.grey,
             ),
-            const SizedBox(width: 48),
+            const SizedBox(width: 48), // Khoảng trống giữa các icon
             IconButton(
               icon: const Icon(Icons.notifications),
               onPressed: () {

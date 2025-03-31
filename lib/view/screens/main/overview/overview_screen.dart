@@ -1,9 +1,12 @@
 import 'package:expense_personal/widgets/overview_card.dart';
 import 'package:expense_personal/widgets/overview_tab.dart';
 import 'package:flutter/material.dart';
+import '../../../../cores/interfaces/TransactionRepository.dart';
 
 class OverviewScreen extends StatefulWidget {
-  const OverviewScreen({super.key});
+  const OverviewScreen({super.key, required this.transactionRepository});
+
+  final TransactionRepository transactionRepository;
 
   @override
   State<OverviewScreen> createState() => _OverviewScreenState();
@@ -40,7 +43,7 @@ class _OverviewScreenState extends State<OverviewScreen> with SingleTickerProvid
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 40),
-            const OverviewCardList(),
+            OverviewCardList(transactionRepository: widget.transactionRepository),
             const SizedBox(height: 40),
             OverviewTab(tabController: _tabController),
           ],
