@@ -4,12 +4,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_personal/cores/model/user_model.dart';
 
 class AuthService {
-  final FirebaseAuth auth = FirebaseAuth.instance;
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseAuth auth;
+  final FirebaseFirestore firestore;
+
+  AuthService({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : auth = auth ?? FirebaseAuth.instance,
+        firestore = firestore ?? FirebaseFirestore.instance;
 
   Future<UserModel?> register(String email, String name, String password) async {
     try {
-      FirebaseAuth.instance.setLanguageCode("vi");
+      auth.setLanguageCode("vi");
 
       UserCredential userCredential = await auth.createUserWithEmailAndPassword(
         email: email,
@@ -38,7 +44,7 @@ class AuthService {
 
   Future<UserModel?> login(String email, String password) async {
     try {
-      FirebaseAuth.instance.setLanguageCode("vi");
+      auth.setLanguageCode("vi");
 
       UserCredential userCredential = await auth.signInWithEmailAndPassword(
         email: email,
@@ -47,10 +53,8 @@ class AuthService {
 
       User? user = userCredential.user;
       if (user != null && user.email != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+        DocumentSnapshot userDoc =
+        await firestore.collection('users').doc(user.uid).get();
 
         if (userDoc.exists) {
           Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;

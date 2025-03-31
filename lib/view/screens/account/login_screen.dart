@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sai tài khoản hoc mật khẩu!')),
+          const SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!')),
         );
       }
     } catch (e) {

@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 class AuthProvider with ChangeNotifier {
   UserModel? _user;
-  final AuthService _authService = AuthService();
+  final AuthService _authService;
+
+  AuthProvider({AuthService? authService}) : _authService = authService ?? AuthService();
 
   UserModel? get user => _user;
 
@@ -19,7 +21,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     return _user != null;
   }
-
 
   Future<void> logout() async {
     await _authService.logout();

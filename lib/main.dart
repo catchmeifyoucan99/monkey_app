@@ -20,10 +20,11 @@ import 'cores/interfaces/TransactionRepository.dart';
 import 'cores/providers/auth_provider.dart';
 import 'cores/providers/currency_provider.dart';
 import 'cores/repositories/FirebaseTransactionRepository.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
     MultiProvider(
