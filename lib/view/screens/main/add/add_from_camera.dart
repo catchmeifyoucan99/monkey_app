@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class CameraScreen extends StatefulWidget {
   final ImagePicker? imagePicker;
@@ -15,26 +16,71 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  File? _image;
+  File?   _image;
   File get image => _image!;
   String _extractedText = "Waiting for response...";
   String get extractedText => _extractedText;
-  ImagePicker get picker => widget.imagePicker ?? ImagePicker();
 
   Future getImageFromCamera() async {
+    final ImagePicker picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
-    setState(() {
-      if (pickedFile != null) {
-        _extractedText = "Waiting for response...";
+    // setState(() {
+    //   if (pickedFile != null) {
+    //     _extractedText = "Waiting for response...";
+    //     _image = File(pickedFile.path);
+    //     sendToN8n(File(pickedFile.path));
+    //   }
+    // });
+    if (pickedFile != null) {
+      setState(() {
         _image = File(pickedFile.path);
-        sendToN8n(File(pickedFile.path));
-      }
-    });
+      });
+      final textRecognizer = TextRecognizer();
+
+      final InputImage inputImage = InputImage.fromFile(_image!);
+      final RecognizedText recognizedText =
+      await textRecognizer.processImage(inputImage);
+
+      setState(() {
+        getTotal(recognizedText.text);
+      });
+
+      textRecognizer.close();
+    }
+  }
+
+  Future getImageFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    // setState(() {
+    //   if (pickedFile != null) {
+    //     _extractedText = "Waiting for response...";
+    //     _image = File(pickedFile.path);
+    //     sendToN8n(File(pickedFile.path));
+    //   }
+    // });
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      final textRecognizer = TextRecognizer();
+
+      final InputImage inputImage = InputImage.fromFile(_image!);
+      final RecognizedText recognizedText =
+          await textRecognizer.processImage(inputImage);
+
+      setState(() {
+        // getTotal(recognizedText.text);
+        _extractedText = recognizedText.text;
+      });
+
+      textRecognizer.close();
+    }
   }
 
   Future<void> sendToN8n(File imageFile) async {
     String url =
-        "https://9749-14-161-49-158.ngrok-free.app/webhook/receipt_reader";
+        "https://4b0a-113-161-95-116.ngrok-free.app/webhook-test/receipt_reader";
     var request = http.MultipartRequest('POST', Uri.parse(url));
     request.files.add(
       await http.MultipartFile.fromPath(
@@ -78,7 +124,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 "type": "text",
                 "text": "This is a text extract from the image: " +
                     text +
-                    ". Return a json respond with date, total amount spent in VND."
+                    ". Read and return the total amount spent in VND. Only return the number, nothing else."
               },
             ]
           }
@@ -89,7 +135,44 @@ class _CameraScreenState extends State<CameraScreen> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print("Groq Response: ${data['choices'][0]['message']['content']}");
+    } else {
+      print("Error: ${response.statusCode} - ${response.body}");
+    }
+  }
 
+  Future<void> getTotal(final text) async {
+    // String base64Image = await encodeImage(image);
+    final url = Uri.parse("https://api.groq.com/openai/v1/chat/completions");
+    final apiKey = "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";
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $apiKey",
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode({
+        "model": "llama-3.3-70b-versatile", // or "mixtral-8x7b"
+        "messages": [
+          {"role": "system", "content": "You are a helpful AI accountant."},
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a text extract from the receipt image: " +
+                    text +
+                    ". Read and return the total amount spent in VND. Only return the number, nothing else."
+              },
+            ]
+          }
+        ]
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("Groq Response: ${data['choices'][0]['message']['content']}");
+      _extractedText = data['content'];
     } else {
       print("Error: ${response.statusCode} - ${response.body}");
     }
@@ -98,13 +181,22 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Chụp Hình")),
+      appBar: AppBar(title: Text("Lấy ảnh")),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ElevatedButton(
-              onPressed: getImageFromCamera,
-              child: Text("Chụp Hình"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: getImageFromCamera,
+                  child: Text("Chụp ảnh"),
+                ),
+                ElevatedButton(
+                  onPressed: getImageFromGallery,
+                  child: Text("Chọn ảnh"),
+                ),
+              ],
             ),
             SizedBox(height: 10),
             _image != null

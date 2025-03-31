@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../cores/interfaces/TransactionRepository.dart';
 import '../../../../cores/repositories/FirebaseCategoryRepository.dart';
-import '../../../../cores/utils/getUserId.dart';
 import '../../../../widgets/week_calendar_widget.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddSalaryScreen extends StatefulWidget {
   const AddSalaryScreen({super.key, required this.transactionRepository});
