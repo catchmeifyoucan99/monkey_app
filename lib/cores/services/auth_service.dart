@@ -3,6 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_personal/cores/model/user_model.dart';
 
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+}
+
 class AuthService {
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
@@ -14,6 +19,16 @@ class AuthService {
         firestore = firestore ?? FirebaseFirestore.instance;
 
   Future<UserModel?> register(String email, String name, String password) async {
+    if (email.isEmpty || email.trim().isEmpty) {
+      throw AuthException("Email không được để trống");
+    }
+    if (password.isEmpty || password.trim().isEmpty) {
+      throw AuthException("Mật khẩu không được để trống");
+    }
+    if (name.isEmpty || name.trim().isEmpty) {
+      throw AuthException("Tên không được để trống");
+    }
+
     try {
       auth.setLanguageCode("vi");
 
@@ -43,6 +58,13 @@ class AuthService {
   }
 
   Future<UserModel?> login(String email, String password) async {
+    if (email.isEmpty || email.trim().isEmpty) {
+      throw AuthException("Email không được để trống");
+    }
+    if (password.isEmpty || password.trim().isEmpty) {
+      throw AuthException("Mật khẩu không được để trống");
+    }
+
     try {
       auth.setLanguageCode("vi");
 

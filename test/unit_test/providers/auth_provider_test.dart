@@ -84,7 +84,7 @@ void main() {
         notifyCount++;
       });
 
-      await authProvider.register('test@example.com', 'Test User', '123456');
+      await authProvider.register('test123@example.com', 'User', 'password123');
 
       expect(notifyCount, 1);
     });
@@ -98,7 +98,7 @@ void main() {
         notifyCount++;
       });
 
-      await authProvider.login('test@example.com', '123456');
+      await authProvider.login('test123@example.com', 'password123');
 
       expect(notifyCount, 1);
     });

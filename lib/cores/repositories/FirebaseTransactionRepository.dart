@@ -1,16 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_personal/cores/interfaces/TransactionRepository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../cores/utils/getUserId.dart';
 
 class FirebaseTransactionRepository implements TransactionRepository {
   final FirebaseFirestore fireStore;
+  final FirebaseAuth _auth;
 
-  FirebaseTransactionRepository({required this.fireStore});
+  FirebaseTransactionRepository({
+    required this.fireStore,
+    FirebaseAuth? auth,
+  }) : _auth = auth ?? FirebaseAuth.instance;
 
   @override
   Future<void> addExpense(String title, double amount, String category, DateTime date) async {
     try {
-      String? userId = getCurrentUserId();
+      String? userId = getCurrentUserId(auth: _auth);
 
       if (userId == null) {
         print('Không tìm thấy người dùng');
@@ -35,8 +40,7 @@ class FirebaseTransactionRepository implements TransactionRepository {
   @override
   Future<void> addIncome(String title, double amount, String category, DateTime date) async {
     try {
-      String? userId = getCurrentUserId();
-
+      String? userId = getCurrentUserId(auth: _auth);
       if (userId == null) {
         print('Không tìm thấy người dùng');
         return;

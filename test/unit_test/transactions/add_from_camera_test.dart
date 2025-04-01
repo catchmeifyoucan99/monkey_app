@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:expense_personal/view/screens/main/add/add_from_camera.dart';
 
-import 'mock_image_picker.mocks.dart'; // Import generated mocks
+import '../../transactions/mock_image_picker.mocks.dart'; // Import generated mocks
 
 void main() {
   late MockImagePicker mockImagePicker;
