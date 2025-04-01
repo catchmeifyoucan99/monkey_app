@@ -62,17 +62,17 @@ class FirebaseTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Future<int> getTotalIncome(String userId) async {
-    return _getTotalAmount(userId, 'income');
+  Future<int> getTotalIncome(String userId, {DateTime? now}) async {
+    return _getTotalAmount(userId, 'income', now: now);
   }
 
   @override
-  Future<int> getTotalExpense(String userId) async {
-    return _getTotalAmount(userId, 'expense');
+  Future<int> getTotalExpense(String userId, {DateTime? now}) async {
+    return _getTotalAmount(userId, 'expense', now: now);
   }
 
-  Future<int> _getTotalAmount(String userId, String type) async {
-    DateTime now = DateTime.now();
+  Future<int> _getTotalAmount(String userId, String type, {DateTime? now}) async {
+    now ??= DateTime.now(); // Nếu không truyền now, dùng thời gian hiện tại
     DateTime startOfMonth = DateTime(now.year, now.month, 1);
     DateTime endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
