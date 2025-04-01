@@ -58,7 +58,7 @@ void main() {
       await addSampleTransaction(
         userId: 'test-uid',
         type: 'income',
-        amount: 500.5,
+        amount: 500.0,
         date: DateTime(2023, 10, 20),
       );
 
@@ -78,12 +78,12 @@ void main() {
       await addSampleTransaction(
         userId: 'test-uid',
         type: 'expense',
-        amount: 300.75,
+        amount: 300.0,
         date: DateTime(2023, 10, 25),
       );
 
       final total = await repository.getTotalExpense('test-uid', now: now);
-      expect(total, 500); // 200 + 300 = 500
+      expect(total, 500);
     });
 
     test('getTotalIncome() trả về 0 khi không có thu nhập trong tháng', () async {
@@ -92,7 +92,7 @@ void main() {
         userId: 'test-uid',
         type: 'income',
         amount: 1000.0,
-        date: DateTime(2023, 9, 15), // Ngoài tháng 10
+        date: DateTime(2023, 9, 15)
       );
 
       final total = await repository.getTotalIncome('test-uid', now: now);
@@ -105,7 +105,7 @@ void main() {
         userId: 'test-uid',
         type: 'expense',
         amount: 200.0,
-        date: DateTime(2023, 11, 1), // Ngoài tháng 10
+        date: DateTime(2023, 11, 1),
       );
 
       final total = await repository.getTotalExpense('test-uid', now: now);
